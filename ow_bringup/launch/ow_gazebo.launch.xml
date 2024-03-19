@@ -22,13 +22,11 @@
 
      <node pkg="controller_manager"
            exec="spawner"
-           args="diff_cont" />
+           args="omni_cont"/>
      
      <node pkg="controller_manager"
            exec="spawner"
            args="joint_broad"/>
-
-
 
 
 </launch>
