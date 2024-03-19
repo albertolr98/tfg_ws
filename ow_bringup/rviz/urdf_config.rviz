@@ -5,7 +5,6 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /RobotModel1
-        - /RobotModel1/Links1
         - /TF1
         - /TF1/Frames1
         - /TF1/Tree1
@@ -63,7 +62,7 @@ Visualization Manager:
         Value: /robot_description
       Enabled: true
       Links:
-        All Links Enabled: false
+        All Links Enabled: true
         Expand Joint Details: false
         Expand Link Details: false
         Expand Tree: false
@@ -81,12 +80,27 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: false
+          Value: true
+        front_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         top_cover_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: false
+          Value: true
       Mass Properties:
         Inertia: false
         Mass: false
@@ -106,6 +120,14 @@ Visualization Manager:
           Value: true
         bottom_cover_link:
           Value: false
+        front_wheel_link:
+          Value: true
+        left_wheel_link:
+          Value: true
+        odom:
+          Value: true
+        right_wheel_link:
+          Value: true
         top_cover_link:
           Value: false
       Marker Scale: 0.30000001192092896
@@ -118,8 +140,16 @@ Visualization Manager:
           base_link:
             bottom_cover_link:
               {}
+            front_wheel_link:
+              {}
+            left_wheel_link:
+              {}
+            right_wheel_link:
+              {}
             top_cover_link:
               {}
+        odom:
+          {}
       Update Interval: 0
       Value: true
   Enabled: true
