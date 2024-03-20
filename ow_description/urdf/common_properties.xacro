@@ -9,8 +9,8 @@
     <xacro:property name="base_radius" value="0.22"/>
 
     <!-- Simulación -->
-    <xacro:property name="coef1" value="100"/>
-    <xacro:property name="coef2" value="0.1"/>
+    <xacro:property name="coef1" value="0.5"/>
+    <xacro:property name="coef2" value="0.5"/>
 
 
 
