@@ -9,18 +9,13 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 
-include_directories(
-  include include src
-)
-
-add_executable(tmc_ros2_driver src/tmc2130_ros2_driver.cpp)
-ament_target_dependencies(tmc_ros2_driver rclcpp) 
+add_subdirectory(tmc_lib/)
 
 
 
-
-
-
+add_executable(tmc_ros2_driver tmc2130_ros2_driver.cpp)
+ament_target_dependencies(tmc_ros2_driver rclcpp)
+target_link_libraries(tmc_ros2_driver tmc_lib) 
 
 
 install(
@@ -30,4 +25,3 @@ install(
 
 ament_package()
 
-#https://www.theconstruct.ai/how-to-create-a-ros2-c-library/
