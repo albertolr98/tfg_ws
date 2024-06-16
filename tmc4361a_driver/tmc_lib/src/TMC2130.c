@@ -7,7 +7,7 @@
 *******************************************************************************/
 
 
-#include "TMC2130.h"
+#include "../include/TMC2130.h"
 
 // => SPI wrapper
 // Send [length] bytes stored in the [data] array over SPI and overwrite [data]
