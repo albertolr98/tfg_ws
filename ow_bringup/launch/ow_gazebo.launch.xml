@@ -29,7 +29,7 @@
            args="joint_broad"/>
 
      <node pkg="ds4_driver" exec="ds4_driver_node.py">
-          <param name="backend" value="bluetooth"/>
+          <!--param name="backend" value="bluetooth"/-->
      </node>
 
      <node pkg="ds4_driver" exec="ds4_twist_node.py">
