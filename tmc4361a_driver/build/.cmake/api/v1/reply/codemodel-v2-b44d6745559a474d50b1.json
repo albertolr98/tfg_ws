@@ -1,0 +1,108 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-e3fa40db4ffa76b2fd09.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						2,
+						3
+					]
+				},
+				{
+					"build" : "tmc_lib",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-tmc_lib-Debug-9005709a9909d1675e74.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "tmc_lib",
+					"targetIndexes" : 
+					[
+						1
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0,
+						1
+					],
+					"name" : "tmc4361a_driver",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "tmc4361a_driver_uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-tmc4361a_driver_uninstall-Debug-47374985e63cdc4fad69.json",
+					"name" : "tmc4361a_driver_uninstall",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "tmc_lib::@ddfdff018964a3a8abfd",
+					"jsonFile" : "target-tmc_lib-Debug-ce27dc923ba229458883.json",
+					"name" : "tmc_lib",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "tmc_ros2_driver::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-tmc_ros2_driver-Debug-f396d0d71dd5f304047f.json",
+					"name" : "tmc_ros2_driver",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-uninstall-Debug-7e26d30c28e731218f8f.json",
+					"name" : "uninstall",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/albertolr98/tfg_ws/src/tmc4361a_driver/build",
+		"source" : "/home/albertolr98/tfg_ws/src/tmc4361a_driver"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 4
+	}
+}

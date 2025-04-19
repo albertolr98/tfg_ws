@@ -1,0 +1,18 @@
+{
+    "ros.distro": "humble",
+    "python.autoComplete.extraPaths": [
+        "/home/albertolr98/tfg_ws/install/ds4_driver/local/lib/python3.10/dist-packages",
+        "/home/albertolr98/tfg_ws/install/ds4_driver_msgs/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/albertolr98/tfg_ws/install/ds4_driver/local/lib/python3.10/dist-packages",
+        "/home/albertolr98/tfg_ws/install/ds4_driver_msgs/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "files.associations": {
+        "spidev.h": "c"
+    }
+}
