@@ -1,4 +1,0 @@
-source;share/tmc4361a_driver/local_setup.bash
-source;share/tmc4361a_driver/local_setup.dsv
-source;share/tmc4361a_driver/local_setup.sh
-source;share/tmc4361a_driver/local_setup.zsh
