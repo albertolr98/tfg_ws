@@ -17,46 +17,22 @@
         <material>Gazebo/Grey</material>
         <mu>${coef1}</mu>
         <mu2>${coef2}</mu2>
+        <fdir1>${cos(pi/6.0)} ${-sin(pi/6.0)} 0</fdir1>
     </gazebo>
 
     <gazebo reference="left_wheel_link">
         <material>Gazebo/Grey</material>
         <mu>${coef1}</mu>
         <mu2>${coef2}</mu2>
+        <fdir1>${-cos(pi/6.0)} ${-sin(pi/6.0)} 0</fdir1>
     </gazebo>
 
     <gazebo reference="front_wheel_link">
         <material>Gazebo/Grey</material>
         <mu>${coef1}</mu>
         <mu2>${coef2}</mu2>
+        <fdir1>0 1.0 0</fdir1>
 
-    </gazebo>
-
-    <gazebo>
-        <plugin name="diff_drive_controller" filename="libgazebo_ros_diff_drive.so">
-            <!-- Update rate in Hz -->
-            <update_rate>50</update_rate>
-
-            <!-- wheels -->
-            <left_joint>base_left_wheel_joint</left_joint>
-            <right_joint>base_right_wheel_joint</right_joint>
-
-            <!-- kinematics -->
-            <wheel_separation>0.2</wheel_separation>
-            <wheel_diameter>0.2</wheel_diameter>
-
-            <!-- input -->
-            <command_topic>cmd_vel</command_topic>
-
-            <!-- output -->
-            <publish_odom>true</publish_odom>
-            <publish_odom_tf>true</publish_odom_tf>
-            <publish_wheel_tf>true</publish_wheel_tf>
-
-            <odometry_topic>odom</odometry_topic>
-            <odometry_frame>odom</odometry_frame>
-            <robot_base_frame>base_footprint</robot_base_frame>
-        </plugin>
     </gazebo>
 
 </robot>

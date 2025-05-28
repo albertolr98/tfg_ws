@@ -1,0 +1,1 @@
+/usr/bin/cc CMakeFiles/tmc5160.dir/src/user_tmc5160.c.o CMakeFiles/tmc5160.dir/src/spi.c.o CMakeFiles/tmc5160.dir/src/gpio.c.o CMakeFiles/tmc5160.dir/src/uart.c.o CMakeFiles/tmc5160.dir/home/albertolr98/pruebas/TMC-API/tmc/ic/TMC5160/TMC5160.c.o -o tmc5160  /usr/lib/libwiringPi.so 

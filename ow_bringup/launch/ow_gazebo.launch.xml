@@ -12,12 +12,42 @@
 
 
      <include file="$(find-pkg-share gazebo_ros)/launch/gazebo.launch.py">
-          <arg name="verbose" value="true" />
+          <!-- <arg name="verbose" value="true" /> -->
      </include>
 
      <node pkg="gazebo_ros" exec="spawn_entity.py"
           args="-topic robot_description -entity ow" />\
 
      <node pkg="rviz2" exec="rviz2" output="screen" args="-d $(var rviz_config_path)"/>
+
+     <node pkg="controller_manager"
+           exec="spawner"
+           args="omni_cont"/>
+     
+     <node pkg="controller_manager"
+           exec="spawner"
+           args="joint_broad"/>
+
+     <node pkg="ds4_driver" exec="ds4_driver_node.py">
+          <!--param name="backend" value="bluetooth"/-->
+     </node>
+
+     <node pkg="ds4_driver" exec="ds4_twist_node.py">
+          <param name="frame_id" value="base_footprint"/>
+
+          <param name="inputs.linear.x" value="axis_left_y"/>
+          <param name="scales.linear.x" value="1.0"/>
+
+          <param name="inputs.linear.y" value="axis_left_x"/>
+          <param name="scales.linear.y" value="1.0"/>
+
+          <param name="inputs.angular.z" value="axis_right_x"/>
+          <param name="scales.angular.z" value="-2.0"/>
+
+
+          <remap from="/cmd_vel" to="/omni_cont/cmd_vel_unstamped"/>
+          
+     </node>
+
 
 </launch>
