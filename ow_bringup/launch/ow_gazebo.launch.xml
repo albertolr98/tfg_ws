@@ -12,7 +12,7 @@
 
 
      <include file="$(find-pkg-share gazebo_ros)/launch/gazebo.launch.py">
-          <arg name="verbose" value="true" />
+          <!-- <arg name="verbose" value="true" /> -->
      </include>
 
      <node pkg="gazebo_ros" exec="spawn_entity.py"
