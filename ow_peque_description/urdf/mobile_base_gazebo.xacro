@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <gazebo reference="base_link">
+        <material>Gazebo/Blue</material>
+    </gazebo>
+
+    <gazebo reference="bottom_cover_link">
+        <material>Gazebo/Red</material>
+    </gazebo>
+    <gazebo reference="top_cover_link">
+        <material>Gazebo/Red</material>
+    </gazebo>
+
+
+    <gazebo reference="right_wheel_link">
+        <material>Gazebo/Grey</material>
+        <mu>${coef1}</mu>
+        <mu2>${coef2}</mu2>
+        <fdir1>${cos(pi/6.0)} ${-sin(pi/6.0)} 0</fdir1>
+    </gazebo>
+
+    <gazebo reference="left_wheel_link">
+        <material>Gazebo/Grey</material>
+        <mu>${coef1}</mu>
+        <mu2>${coef2}</mu2>
+        <fdir1>${-cos(pi/6.0)} ${-sin(pi/6.0)} 0</fdir1>
+    </gazebo>
+
+    <gazebo reference="front_wheel_link">
+        <material>Gazebo/Grey</material>
+        <mu>${coef1}</mu>
+        <mu2>${coef2}</mu2>
+        <fdir1>0 1.0 0</fdir1>
+
+    </gazebo>
+
+</robot>
