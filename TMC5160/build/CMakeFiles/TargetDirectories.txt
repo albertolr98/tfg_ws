@@ -1,3 +1,0 @@
-/home/albertolr98/pruebas/TMC5160/build/CMakeFiles/tmc5160.dir
-/home/albertolr98/pruebas/TMC5160/build/CMakeFiles/edit_cache.dir
-/home/albertolr98/pruebas/TMC5160/build/CMakeFiles/rebuild_cache.dir
