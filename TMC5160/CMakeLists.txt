@@ -74,5 +74,9 @@ set_target_properties(${EXECUTABLE_NAME} PROPERTIES
 # Opcional: Añadir librerías si son necesarias (ej. -lm para matemática)
 # target_link_libraries(${EXECUTABLE_NAME} PRIVATE m)
 
+# Install as Ros2 jazzy package
+install(TARGETS ${EXECUTABLE_NAME}
+    RUNTIME DESTINATION CMAKE_BINARY_DIR
+  )
 # Mensaje informativo
 message(STATUS "Ejecutable '${EXECUTABLE_NAME}' se generará en: ${EXECUTABLE_OUTPUT_PATH}")
