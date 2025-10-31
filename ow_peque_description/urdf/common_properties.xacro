@@ -2,11 +2,11 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
  
     <!--Parametros-->
-    <xacro:property name="base_plate_height" value="0.004"/>
-    <xacro:property name="corner_height" value="0.091"/>
-    <xacro:property name="corner_shaft_height" value="0.04"/>
-    <xacro:property name="omniwheel_radius" value="0.05"/>
-    <xacro:property name="base_radius" value="0.22"/>
+    <xacro:property name="base_plate_height" value="0.018"/>
+    <xacro:property name="base_to_ground_height" value="0.02"/>
+    <xacro:property name="ground_to_shaft_height" value="0.03"/>
+    <xacro:property name="omniwheel_radius" value="0.025"/>
+    <xacro:property name="base_radius" value="0.09"/>
 
     <!-- Simulación -->
     <xacro:property name="coef1" value="0.5"/>

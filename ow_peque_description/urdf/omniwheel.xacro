@@ -3,7 +3,7 @@
   <link name="omniwheel_link">
     <visual>
       <geometry>
-        <mesh filename="file://$(find ow_description)/meshes/OmniwheelBody.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file://$(find ow_peque_description)/meshes/RuedaOmnidireccional.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <origin xyz="0 0 0" rpy="0 0 0"/>
     </visual>

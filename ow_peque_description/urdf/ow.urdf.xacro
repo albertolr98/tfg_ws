@@ -4,12 +4,6 @@
     <xacro:include filename="common_properties.xacro"/>
     <xacro:include filename="materials.xacro"/>
 
-    <!-- Plugin de ros2_control para manejar el robot-->
-    <xacro:include filename="ros2_control.xacro"/>
-
     <xacro:include filename="mobile_base.xacro"/>
-    <xacro:include filename="mobile_base_gazebo.xacro"/>
 
-    <!--xacro:include filename="omniwheel.xacro"/-->
-    
 </robot>

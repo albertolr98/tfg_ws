@@ -11,18 +11,18 @@
     <link name ="base_link">
         <visual>
             <geometry>
-                <mesh filename="file://$(find ow_description)/meshes/BodyFrame.stl" scale="0.001 0.001 0.001"/>
+                <mesh filename="file://$(find ow_peque_description)/meshes/EnsamblajeRobotPeque.stl" scale="0.001 0.001 0.001"/>
             </geometry>
-            <origin xyz="0 0 ${corner_height - corner_shaft_height }" rpy="0 0 0"/>
+            <origin xyz="0 0 ${base_to_ground_height}" rpy="${pi / 2.0} 0 ${-2.0 * pi / 3.0}"/>
             <material name="blue"/>
         </visual>
         <collision>
             <geometry>
-                <mesh filename="file://$(find ow_description)/meshes/BodyFrame.stl" scale="0.001 0.001 0.001"/>
+                <mesh filename="file://$(find ow_peque_description)/meshes/EnsamblajeRobotPeque.stl" scale="0.001 0.001 0.001"/>
 
                 <!--cylinder radius="${base_radius}" length="${corner_height - corner_shaft_height }"/-->
             </geometry>
-            <origin xyz="0 0 ${corner_height - corner_shaft_height }" rpy="0 0 0"/>
+            <origin xyz="0 0 ${base_to_ground_height}" rpy="${pi / 2.0} 0 ${-2.0 * pi / 3.0}"/>
         </collision>
          <inertial>
             <mass value="5"/>
@@ -32,43 +32,13 @@
     </link>
 
 
-    <link name="bottom_cover_link">
-        <visual>
-            <geometry>
-                <mesh filename="file://$(find ow_description)/meshes/base.stl" scale="0.001 0.001 0.001"/>
-            </geometry>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <material name="red"/>
-        </visual>
-        <inertial>
-            <mass value="0.129"/>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <inertia ixx="0.0004055" ixy="0" ixz="0" iyy="0.0004055" iyz="0" izz="0"/>
-        </inertial>
-    </link>
-
-    <link name="top_cover_link">
-        <visual>
-            <geometry>
-                <mesh filename="file://$(find ow_description)/meshes/base.stl" scale="0.001 0.001 0.001"/>
-            </geometry>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <material name="red"/>
-        </visual>
-        <inertial>
-            <mass value="0.129"/>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <inertia ixx="0.0004055" ixy="0" ixz="0" iyy="0.0004055" iyz="0" izz="0"/>
-        </inertial>
-    </link>
-    
     <xacro:macro name="omniwheel" params="prefix angle">
         <link name="${prefix}_wheel_link">
             <visual>
                 <geometry>
-                    <mesh filename="file://$(find ow_description)/meshes/omniwheel.stl" scale="0.001 0.001 0.001"/>
+                    <mesh filename="file://$(find ow_peque_description)/meshes/RuedaOmnidireccional.stl" scale="0.001 0.001 0.001"/>
                 </geometry>
-                <origin xyz="0 0 0" rpy="${pi / 2.0} 0 0"/>
+                <origin xyz="0 0 0" rpy="0 0 ${pi / 2.0}"/>
                 <material name="grey"/>
             </visual>
             <inertial>
@@ -78,8 +48,8 @@
             </inertial>
             <collision>
                 <geometry>
-                    <!--mesh filename="file://$(find ow_description)/meshes/omniwheel.stl" scale="0.001 0.001 0.001"/-->
-                    <cylinder radius="${omniwheel_radius}" length="0.005"/>
+                    <!--mesh filename="file://$(find ow_peque_description)/meshes/omniwheel.stl" scale="0.001 0.001 0.001"/-->
+                    <cylinder radius="${omniwheel_radius}" length="0.02"/>
                 </geometry>
                 <origin xyz="0 0 0" rpy="${pi / 2.0} 0 0"/>
             </collision>
@@ -88,7 +58,10 @@
         <joint name="base_${prefix}_wheel_joint" type="continuous">
             <parent link="base_link"/>
             <child link="${prefix}_wheel_link"/>
-            <origin xyz="${cos (angle) * base_radius} ${sin (angle) * base_radius} 0" rpy="0 0 ${angle - pi / 2.0}"/>
+            <!-- Use 0 for the wheel joint z origin to match the other description
+                 and avoid a 0 -> 0.05 jump in RViz when multiple descriptions
+                 or TF sources are present. -->
+            <origin xyz="${cos (angle) * base_radius} ${sin (angle) * base_radius} ${ground_to_shaft_height}" rpy="0 0 ${angle - pi / 2.0}"/>
             <axis xyz="0 1 0"/>
         </joint>
     </xacro:macro>
@@ -105,18 +78,5 @@
         <origin xyz="0 0 ${omniwheel_radius}" rpy="0 0 0"/>
     </joint>
 
-    <joint name="base_bottom_cover_joint" type="fixed">
-        <parent link="base_link"/>
-        <child link="bottom_cover_link"/>
-        <origin xyz="0 0 ${-corner_shaft_height + base_plate_height * 2 }" rpy="0 0 0"/>
-    </joint>
-
-    <joint name="base_top_cover_joint" type="fixed">
-        <parent link="base_link"/>
-        <child link="top_cover_link"/>
-        <origin xyz="0 0 ${corner_height - corner_shaft_height }" rpy="0 0 0"/>
-    </joint>
-
-    
 
 </robot>
