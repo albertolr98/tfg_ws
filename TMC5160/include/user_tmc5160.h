@@ -9,4 +9,4 @@ TMC5160BusType tmc5160_getBusType(uint16_t icID);
 uint8_t tmc5160_getNodeAddress(uint16_t icID);
 
 void enable_power();
-void tmc5160_init(uint16_t icID);
+void init_tmc5160(uint16_t icID);

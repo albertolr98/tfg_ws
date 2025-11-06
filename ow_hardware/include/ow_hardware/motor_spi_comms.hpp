@@ -4,7 +4,8 @@
 #include <string>
 #include <vector>
 #include <cstdint>
-#include "TMC5160.h" // Asegúrate de que esta ruta sea correcta para tu proyecto
+#include "TMC5160_HW_Abstraction.h" // Include hardware abstraction to get bus type and register helpers
+#include "TMC5160.h" // Also include main TMC5160 definitions (registers, types)
 // Tipos de ejemplo para TMC-API (reemplazar con los reales)
 #ifndef TMC_ERROR_NONE
 #define TMC_ERROR_NONE 0
@@ -57,17 +58,9 @@ private:
     // No se necesitan descriptores de gpiod_chip o gpiod_line
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-TMC5160BusType tmc5160_getBusType(uint8_t icID);
-uint8_t tmc5160_readWriteSPI(uint8_t icID, uint8_t *data, size_t length);
-void tmc5160_readWriteUART(uint8_t icID, uint8_t *data, size_t length, uint16_t *crc);
-uint8_t tmc5160_getNodeAddress(uint8_t icID);
-
-#ifdef __cplusplus
-}
-#endif
+// The TMC5160 hardware abstraction header (`TMC5160_HW_Abstraction.h`) already
+// declares the C API functions (tmc5160_readWriteSPI, tmc5160_getNodeAddress, etc.).
+// Do not redeclare them here to avoid signature conflicts. Include the header
+// instead (done above).
 
 #endif // OW_HARDWARE_MOTOR_SPI_COMMS_HPP

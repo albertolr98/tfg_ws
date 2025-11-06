@@ -18,6 +18,7 @@ set(EXECUTABLE_NAME tmc5160)
 set(SOURCES
     # Archivos fuente de tu proyecto
     src/user_tmc5160.c
+    src/tmc5160_api_bridge.c
     src/spi.c
     src/gpio.c
     src/uart.c
@@ -30,7 +31,7 @@ set(SOURCES
 set(INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR} # Directorio actual (para user_tmc5160.h)
     ./include
-    ../TMC-API/tmc/ic/TMC5160   # Directorio de TMC5160.h
+    ../TMC-API
     # --- IMPORTANTE ---
     # Añade otros directorios de inclusión de la API si son necesarios
     # Ejemplo:

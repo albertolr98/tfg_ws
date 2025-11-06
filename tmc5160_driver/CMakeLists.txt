@@ -18,8 +18,8 @@ pkg_check_modules(LIBGPIOD REQUIRED libgpiod)
 
 # Include directories
 include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/../TMC-API/tmc/ic/TMC5160/
-  ${CMAKE_CURRENT_SOURCE_DIR}/../TMC-API/
+  ${CMAKE_CURRENT_SOURCE_DIR}/../TMC-API
+  ${CMAKE_CURRENT_SOURCE_DIR}/../TMC5160/include
   ${LIBGPIOD_INCLUDE_DIRS}
   include
 )
@@ -30,8 +30,7 @@ add_library(${PROJECT_NAME}
   src/spi_interface.cpp
   # Add only TMC-API source files that exist
   ${CMAKE_CURRENT_SOURCE_DIR}/../TMC-API/tmc/ic/TMC5160/TMC5160.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../TMC-API/tmc/helpers/Functions.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../TMC-API/tmc/helpers/CRC.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/../TMC5160/src/tmc5160_api_bridge.c
 )
 
 # Link against required libraries

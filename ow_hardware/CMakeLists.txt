@@ -25,11 +25,12 @@ include_directories(include)
 # Añade los directorios de inclusión de la TMC-API.
 # Ajusta estas rutas si tu estructura de TMC-API es diferente.
 # ${CMAKE_CURRENT_SOURCE_DIR} es /home/albertolr98/tfg_ws/src/ow_hardware
-set(TMC_API_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../TMC-API)
+set(TMC_API_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../TMC-API/tmc)
 include_directories(
-  ${TMC_API_DIR}/tmc/ic/TMC5160 # Para TMC5160.h, TMC5160_HW_Abstraction.h
-  ${TMC_API_DIR}/tmc/helpers    # Para Functions.h, CRC.h (si los usas)
-  # Añade más directorios de TMC-API si es necesario (ej. tmc/hal)
+  ${CMAKE_CURRENT_SOURCE_DIR}/../TMC-API         # Top-level so includes like "tmc/helpers/API_Header.h" resolve
+  ${TMC_API_DIR}/ic/TMC5160 # Para TMC5160.h, TMC5160_HW_Abstraction.h
+  ${TMC_API_DIR}/helpers    # Para Functions.h, CRC.h (si los usas)
+  ${CMAKE_CURRENT_SOURCE_DIR}/../TMC5160/include # Provide TMC5160 hardware abstraction headers
 )
 
 # --- 3. Definir Fuentes ---
@@ -41,7 +42,7 @@ set(OW_HARDWARE_SOURCES
 
 # Lista los archivos fuente .c de la TMC-API que necesitas compilar.
 set(TMC_API_SOURCES
-  ${TMC_API_DIR}/tmc/ic/TMC5160/TMC5160.c
+  ${TMC_API_DIR}/ic/TMC5160/TMC5160.c
   # Descomenta y añade otros si los necesitas:
   # ${TMC_API_DIR}/tmc/helpers/Functions.c
   # ${TMC_API_DIR}/tmc/helpers/CRC.c

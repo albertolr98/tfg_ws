@@ -9,6 +9,7 @@
 extern "C" {
   #include "tmc/helpers/API_Header.h"
   #include "tmc/ic/TMC5160/TMC5160.h"
+  #include "TMC5160_HW_Abstraction.h"
 }
 
 // Global variables needed for TMC-API integration

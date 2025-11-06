@@ -208,28 +208,34 @@ bool MotorSpiComms::readMotorVelocity(uint8_t motor_idx, int32_t& velocity) {
 
 
 extern "C" {
-    TMC5160BusType tmc5160_getBusType(uint8_t icID) {
-        (void)icID; 
-        // Assuming IC_BUS_SPI is the correct enum member from your TMC5160.h or a related header
-        // If not, replace with the actual enum member for SPI (e.g., TMC_BUS_SPI)
+    // Match the TMC-API expected signatures (use uint16_t for icID where the
+    // API declares it). These functions are the platform-specific hooks used by
+    // the TMC API.
+    TMC5160BusType tmc5160_getBusType(uint16_t icID) {
+        (void)icID;
         return IC_BUS_SPI; 
     }
 
-    uint8_t tmc5160_readWriteSPI(uint8_t icID, uint8_t *data, size_t length) {
+    void tmc5160_readWriteSPI(uint16_t icID, uint8_t *data, size_t length) {
         if (g_motor_comms_instance) {
-            return g_motor_comms_instance->executeSpiTransaction(icID, data, length);
+            // executeSpiTransaction returns a status code; the TMC API's
+            // low-level SPI wrapper used by TMC5160.c expects a void function
+            // that performs the transaction and overwrites data in-place. So
+            // we call it and ignore the return value here.
+            (void)g_motor_comms_instance->executeSpiTransaction((uint8_t)icID, data, length);
+            return;
         }
-        return TMC_ERROR_GENERIC; 
+        // If no instance, do nothing (silently fail) — could log if desired.
+        return;
     }
 
-    void tmc5160_readWriteUART(uint8_t icID, uint8_t *data, size_t length, uint16_t *crc) {
-        (void)icID;
-        (void)data;
-        (void)length;
-        (void)crc;
+    bool tmc5160_readWriteUART(uint16_t icID, uint8_t *data, size_t writeLength, size_t readLength) {
+        (void)icID; (void)data; (void)writeLength; (void)readLength;
+        // Not implemented for this platform; return false to indicate failure.
+        return false;
     }
 
-    uint8_t tmc5160_getNodeAddress(uint8_t icID) {
+    uint8_t tmc5160_getNodeAddress(uint16_t icID) {
         (void)icID;
         return 0xFF; 
     }

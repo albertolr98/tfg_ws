@@ -59,10 +59,14 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
-install(
-  DIRECTORY launch
-  DESTINATION share/${PROJECT_NAME}
-)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/launch")
+  install(
+    DIRECTORY launch
+    DESTINATION share/${PROJECT_NAME}
+  )
+else()
+  message(STATUS "Note: no 'launch' directory in ${PROJECT_NAME}, skipping install of launch files.")
+endif()
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
