@@ -40,9 +40,12 @@
   </xacro:if>
 
     <gazebo>
-        <plugin name="gz_ros2_control" filename="libgazebo_ros2_control.so">
-            <parameters>$(find ow_peque_description)/config/my_controllers.yaml</parameters>
-          <parameters>$(find ow_peque_description)/config/gaz_ros2_ctl_use_sim.yaml</parameters>
+        <plugin name="gz_ros2_control::GazeboSimROS2ControlPlugin" filename="libgz_ros2_control-system.so">
+            <ros>
+                <namespace>/</namespace>
+            </ros>
+            <parameters>$(find ow_peque_description)/config/controllers.yaml</parameters>
+            <parameters>$(find ow_peque_description)/config/gaz_ros2_ctl_use_sim.yaml</parameters>
         </plugin>
     </gazebo>
 
