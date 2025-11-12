@@ -1,9 +1,7 @@
-[submodule "TMC-API"]
-	path = TMC-API
-	url = https://github.com/trinamic/TMC-API.git
 [submodule "ds4_driver"]
 	path = ds4_driver
 	url = https://github.com/naoki-mizuno/ds4_driver
-[submodule "omnidirectional_controllers"]
-	path = omnidirectional_controllers
-	url = https://github.com/mateusmenezes95/omnidirectional_controllers
+
+[submodule "tmc_driver"]
+	path = tmc_driver
+	url = https://github.com/albertolr98/tmc_driver
