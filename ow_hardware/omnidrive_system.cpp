@@ -26,6 +26,7 @@
 #include "hardware_interface/lexical_casts.hpp"
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "tmc5160.hpp"
 
 namespace ow_hardware
 {
@@ -45,6 +46,21 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_init(
   hw_stop_sec_ =
     hardware_interface::stod(info_.hardware_parameters["example_param_hw_stop_duration_sec"]);
   // END: This part here is for exemplary purposes - Please do not copy to your production code
+
+  // Initialize the TMC5160 driver (pins are placeholder values for now)
+  const unsigned int cs_pin = 5;
+  const unsigned int en_pin = 26;
+  TMC5160 driver(cs_pin, en_pin);
+  if (!driver.init())
+  {
+    RCLCPP_FATAL(get_logger(), "Failed to initialize TMC5160 driver.");
+    return hardware_interface::CallbackReturn::ERROR;
+  } 
+  if (!driver.checkComms("OmnidriveSystemHardware"))
+  {
+    RCLCPP_FATAL(get_logger(), "Failed to communicate with TMC5160 driver.");
+    return hardware_interface::CallbackReturn::ERROR;
+  }
 
   for (const hardware_interface::ComponentInfo & joint : info_.joints)
   {

@@ -11,6 +11,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   pluginlib
   rclcpp
   rclcpp_lifecycle
+  tmc_driver
 )
 
 # Specify the required version of ros2_control
@@ -39,6 +40,9 @@ target_include_directories(ow_hardware PUBLIC
 $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
 $<INSTALL_INTERFACE:include/ow_hardware>
 )
+if(DEFINED tmc_driver_INCLUDE_DIRS)
+  target_include_directories(ow_hardware PUBLIC ${tmc_driver_INCLUDE_DIRS})
+endif()
 target_link_libraries(ow_hardware PUBLIC
   hardware_interface::hardware_interface
   pluginlib::pluginlib

@@ -19,6 +19,7 @@
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_lifecycle</depend>
+  <depend>tmc_driver</depend>
 
   <exec_depend>controller_manager</exec_depend>
   <exec_depend>omni_wheel_drive_controller</exec_depend>

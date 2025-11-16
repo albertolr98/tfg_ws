@@ -29,6 +29,7 @@
 #include "rclcpp/time.hpp"
 #include "rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp"
 #include "rclcpp_lifecycle/state.hpp"
+#include "tmc5160.hpp"
 
 namespace ow_hardware
 {
