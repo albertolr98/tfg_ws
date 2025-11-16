@@ -114,6 +114,8 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_init(
     return hardware_interface::CallbackReturn::ERROR;
   }
 
+  // Instanciar la comunicación SPI
+  comms_ = std::make_unique<SPIBus>();
 
   // Inicializar los drivers de los motores con los pines configurados
   driver_front_wheel_ = std::make_unique<TMC5160>(
@@ -140,7 +142,28 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_activate(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
 
-  // comms_.init();
+
+  // Iniciamos la comunicación SPI
+  comms_->init(cfg_.spi_device.c_str(), static_cast<uint32_t>(cfg_.spi_speed_hz));
+
+  // Check de comunicación con los drivers
+  if (!driver_front_wheel_->checkComms("Front Wheel")) {
+    RCLCPP_ERROR(get_logger(), "Fallo de comunicación con el driver de la rueda frontal");
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+  if (!driver_left_wheel_->checkComms("Left Wheel")) {
+    RCLCPP_ERROR(get_logger(), "Fallo de comunicación con el driver de la rueda izquierda");
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+  if (!driver_right_wheel_->checkComms("Right Wheel")) {
+    RCLCPP_ERROR(get_logger(), "Fallo de comunicación con el driver de la rueda derecha");
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+
+  // Habilitamos los drivers
+  driver_front_wheel_->init();
+  driver_left_wheel_->init();
+  driver_right_wheel_->init();
   
   return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -148,9 +171,12 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_activate(
 hardware_interface::CallbackReturn OmnidriveSystemHardware::on_deactivate(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
-  // TODO(alr): Stop the motors, disable driver outputs, and put the hardware in a safe state.
-
-  //comms_.close();
+  // Deshabilitamos los drivers
+  driver_front_wheel_->shutdown();
+  driver_left_wheel_->shutdown();
+  driver_right_wheel_->shutdown();  
+  
+  comms_->close();
 
   return hardware_interface::CallbackReturn::SUCCESS;
 }
