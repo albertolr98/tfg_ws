@@ -16,8 +16,8 @@ omni_wheel_drive_controller:
     wheel_names:
       [
         "base_front_wheel_joint",
-        "base_right_wheel_joint",
-        "base_left_wheel_joint"
+        "base_left_wheel_joint",
+        "base_right_wheel_joint"
       ]
 
     robot_radius: 0.09
