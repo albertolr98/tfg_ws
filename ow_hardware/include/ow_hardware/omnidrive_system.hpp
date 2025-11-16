@@ -15,6 +15,7 @@
 #ifndef OW_HARDWARE_OMNIDRIVE_SYSTEM_HPP_
 #define OW_HARDWARE_OMNIDRIVE_SYSTEM_HPP_
 
+#include <array>
 #include <memory>
 #include <string>
 #include <vector>
@@ -74,11 +75,14 @@ public:
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 private:
+  static constexpr std::size_t kWheelCount = 3;
+
   std::unique_ptr<SPIBus> comms_;
   Config cfg_;
   std::unique_ptr<TMC5160> driver_front_wheel_;
   std::unique_ptr<TMC5160> driver_left_wheel_;
   std::unique_ptr<TMC5160> driver_right_wheel_;
+  std::array<TMC5160 *, kWheelCount> driver_ptrs_{};
 };
 
 }  // namespace ow_hardware

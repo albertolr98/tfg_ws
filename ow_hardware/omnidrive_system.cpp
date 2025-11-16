@@ -124,6 +124,8 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_init(
     cfg_.left_wheel_cs_gpio, cfg_.left_wheel_en_gpio);
   driver_right_wheel_ = std::make_unique<TMC5160>(
     cfg_.right_wheel_cs_gpio, cfg_.right_wheel_en_gpio);
+  driver_ptrs_ = {{
+    driver_front_wheel_.get(), driver_left_wheel_.get(), driver_right_wheel_.get()}};
 
 
   return hardware_interface::CallbackReturn::SUCCESS;
@@ -184,10 +186,43 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_deactivate(
 hardware_interface::return_type OmnidriveSystemHardware::read(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
-  // TODO(alr): Pull encoder/velocity data from driver_ and update the corresponding state
-  // interfaces with set_state(name, value).
+  // Read wheel states and publish them in joint-state interfaces (radians / rad*s^-1).
+  const auto & drivers = driver_ptrs_;
 
-  //READ_DRIVES_VALUES
+  if (info_.joints.size() != drivers.size())
+  {
+    RCLCPP_ERROR(
+      get_logger(), "Joint count (%zu) does not match driver count (%zu).",
+      info_.joints.size(), drivers.size());
+    return hardware_interface::return_type::ERROR;
+  }
+
+  for (std::size_t idx = 0; idx < drivers.size(); ++idx)
+  {
+    auto * driver = drivers[idx];
+    const auto & joint = info_.joints[idx];
+
+    if (driver == nullptr)
+    {
+      RCLCPP_ERROR(get_logger(), "Driver for joint '%s' not initialized.", joint.name.c_str());
+      return hardware_interface::return_type::ERROR;
+    }
+
+    try
+    {
+      const double position = static_cast<double>(driver->readPosition(0));
+      const double velocity = static_cast<double>(driver->readSpeed(0));
+
+      set_state(joint.name + "/" + hardware_interface::HW_IF_POSITION, position);
+      set_state(joint.name + "/" + hardware_interface::HW_IF_VELOCITY, velocity);
+    }
+    catch (const std::exception & e)
+    {
+      RCLCPP_ERROR(
+        get_logger(), "Failed to read state for joint '%s': %s", joint.name.c_str(), e.what());
+      return hardware_interface::return_type::ERROR;
+    }
+  }
 
   return hardware_interface::return_type::OK;
 }
