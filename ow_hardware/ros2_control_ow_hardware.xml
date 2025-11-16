@@ -1,0 +1,7 @@
+<library path="ow_hardware">
+  <class name="ow_hardware/OmnidriveSystemHardware"
+         type="ow_hardware::OmnidriveSystemHardware"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>System interface plugin for the OW omnidrive hardware.</description>
+  </class>
+</library>

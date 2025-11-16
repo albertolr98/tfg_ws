@@ -1,89 +1,72 @@
-cmake_minimum_required(VERSION 3.8)
-project(ow_hardware)
+cmake_minimum_required(VERSION 3.16)
+project(ow_hardware LANGUAGES CXX)
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+find_package(ros2_control_cmake REQUIRED)
+set_compiler_options()
+export_windows_symbols()
+
+# find dependencies
+set(THIS_PACKAGE_INCLUDE_DEPENDS
+  hardware_interface
+  pluginlib
+  rclcpp
+  rclcpp_lifecycle
+)
+
+# Specify the required version of ros2_control
+find_package(controller_manager 4.0.0)
+# Handle the case where the required version is not found
+if(NOT controller_manager_FOUND)
+  message(FATAL_ERROR "ros2_control version 4.0.0 or higher is required. "
+  "Are you using the correct branch of the ros2_control_demos repository?")
 endif()
 
+# find dependencies
+find_package(backward_ros REQUIRED)
 find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
+foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
+  find_package(${Dependency} REQUIRED)
+endforeach()
 
-find_library(WIRINGPI_LIBRARY wiringPi)
-if(NOT WIRINGPI_LIBRARY)
-  message(FATAL_ERROR "Librería wiringPi no encontrada. Asegúrate de que está instalada y accesible (sudo apt install wiringpi).")
-else()
-  message(STATUS "wiringPi encontrada: ${WIRINGPI_LIBRARY}")
-endif()
-
-include_directories(include)
-
-set(TMC_API_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../TMC-API/tmc)
-set(TMC5160_DIR ${TMC_API_DIR}/ic/TMC5160)
-set(TMC5240_DIR ${TMC_API_DIR}/ic/TMC5240)
-
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/../TMC-API
-  ${TMC5160_DIR}
-  ${TMC_API_DIR}/helpers
-  ${CMAKE_CURRENT_SOURCE_DIR}/../TMC5160/include
+## COMPILE
+add_library(
+  ow_hardware
+  SHARED
+  omnidrive_system.cpp
+)
+target_compile_features(ow_hardware PUBLIC cxx_std_17)
+target_include_directories(ow_hardware PUBLIC
+$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+$<INSTALL_INTERFACE:include/ow_hardware>
+)
+target_link_libraries(ow_hardware PUBLIC
+  hardware_interface::hardware_interface
+  pluginlib::pluginlib
+  rclcpp::rclcpp
+  rclcpp_lifecycle::rclcpp_lifecycle
 )
 
-if(EXISTS ${TMC5240_DIR})
-  include_directories(${TMC5240_DIR})
-endif()
+# Export hardware plugins
+pluginlib_export_plugin_description_file(hardware_interface ros2_control_ow_hardware.xml)
 
-set(OW_HARDWARE_SOURCES
-  src/motor_spi_comms.cpp
-)
-
-set(TMC_API_SOURCES
-  ${TMC5160_DIR}/TMC5160.c
-)
-
-if(EXISTS ${TMC5240_DIR}/TMC5240.c)
-  list(APPEND TMC_API_SOURCES ${TMC5240_DIR}/TMC5240.c)
-endif()
-
-add_library(${PROJECT_NAME}_lib SHARED
-  ${OW_HARDWARE_SOURCES}
-  ${TMC_API_SOURCES}
-)
-
-target_link_libraries(${PROJECT_NAME}_lib
-  PUBLIC
-    ${WIRINGPI_LIBRARY}
-    rclcpp::rclcpp
-)
-
-target_include_directories(${PROJECT_NAME}_lib PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
-)
-
-install(
-  TARGETS ${PROJECT_NAME}_lib
-  EXPORT export_${PROJECT_NAME}_lib
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
-  RUNTIME DESTINATION bin
-  INCLUDES DESTINATION include
-)
-
+# INSTALL
 install(
   DIRECTORY include/
-  DESTINATION include
+  DESTINATION include/ow_hardware
 )
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  set(ament_cmake_copyright_FOUND TRUE)
-  set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
-endif()
-
-ament_export_targets(export_${PROJECT_NAME}_lib HAS_LIBRARY_TARGET)
-ament_export_dependencies(
-  rclcpp
+install(TARGETS ow_hardware
+  EXPORT export_ow_hardware
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 
+install(FILES ros2_control_ow_hardware.xml
+  DESTINATION share/ow_hardware)
+
+
+## EXPORTS
+ament_export_targets(export_ow_hardware HAS_LIBRARY_TARGET)
+ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
 ament_package()
