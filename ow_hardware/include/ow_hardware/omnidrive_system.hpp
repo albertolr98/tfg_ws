@@ -29,12 +29,29 @@
 #include "rclcpp/time.hpp"
 #include "rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp"
 #include "rclcpp_lifecycle/state.hpp"
+
+#include "spi_bus.hpp"
 #include "tmc5160.hpp"
 
 namespace ow_hardware
 {
 class OmnidriveSystemHardware : public hardware_interface::SystemInterface
 {
+
+struct Config
+{
+  unsigned int front_wheel_cs_gpio;
+  unsigned int front_wheel_en_gpio;
+  unsigned int left_wheel_cs_gpio;
+  unsigned int left_wheel_en_gpio;
+  unsigned int right_wheel_cs_gpio;
+  unsigned int right_wheel_en_gpio;
+
+  std::string spi_device;
+  int spi_speed_hz;
+};
+
+
 public:
   RCLCPP_SHARED_PTR_DEFINITIONS(OmnidriveSystemHardware)
 
@@ -57,9 +74,11 @@ public:
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 private:
-  // Parameters for the Omnidrive simulation example
-  double hw_start_sec_;
-  double hw_stop_sec_;
+  std::unique_ptr<SPIBus> comms_;
+  Config cfg_;
+  std::unique_ptr<TMC5160> driver_front_wheel_;
+  std::unique_ptr<TMC5160> driver_left_wheel_;
+  std::unique_ptr<TMC5160> driver_right_wheel_;
 };
 
 }  // namespace ow_hardware
