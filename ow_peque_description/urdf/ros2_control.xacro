@@ -37,8 +37,6 @@
         </joint>
     </ros2_control>
 
-  </xacro:if>
-
     <gazebo>
         <plugin name="gz_ros2_control::GazeboSimROS2ControlPlugin" filename="libgz_ros2_control-system.so">
             <ros>
@@ -48,5 +46,51 @@
             <parameters>$(find ow_peque_description)/config/gaz_ros2_ctl_use_sim.yaml</parameters>
         </plugin>
     </gazebo>
+  </xacro:if>
+
+  <xacro:unless value="$(arg sim_mode)">
+    <ros2_control name="OmnidriveSystemHardware" type="system">
+        <hardware>
+            <plugin>ow_hardware/OmnidriveSystemHardware</plugin>
+            <param name="front_wheel_cs_gpio">22</param>
+            <param name="front_wheel_en_gpio">19</param>
+            <param name="left_wheel_cs_gpio">27</param>
+            <param name="left_wheel_en_gpio">24</param>
+            <param name="right_wheel_cs_gpio">17</param>
+            <param name="right_wheel_en_gpio">23</param>
+            <param name="spi_device">/dev/spidev0.0</param>
+            <param name="spi_speed_hz">1000000</param>
+        </hardware>
+        <joint name="base_left_wheel_joint">
+            <command_interface name="velocity">
+                <param name="min">-5.0</param>
+                <param name="max">5.0</param>
+            </command_interface>
+
+            <state_interface name="velocity"/>
+            <state_interface name="position"/>
+        </joint>
+
+        <joint name="base_front_wheel_joint">
+            <command_interface name="velocity">
+                <param name="min">-5.0</param>
+                <param name="max">5.0</param>
+            </command_interface>
+
+            <state_interface name="velocity"/>
+            <state_interface name="position"/>
+        </joint>
+
+        <joint name="base_right_wheel_joint">
+            <command_interface name="velocity">
+                <param name="min">-5.0</param>
+                <param name="max">5.0</param>
+            </command_interface>
+
+            <state_interface name="velocity"/>
+            <state_interface name="position"/>
+        </joint>
+    </ros2_control>
+  </xacro:unless>
 
 </robot>
