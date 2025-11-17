@@ -227,14 +227,44 @@ hardware_interface::return_type OmnidriveSystemHardware::read(
   return hardware_interface::return_type::OK;
 }
 
-hardware_interface::return_type ow_hardware ::OmnidriveSystemHardware::write(
+hardware_interface::return_type ow_hardware::OmnidriveSystemHardware::write(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
-  // TODO(alr): Iterate over joint_command_interfaces_, translate the command to motor setpoints,
-  // and push them to driver_ (speed/position depending on your control mode).
+  // Commands arrive in rad/s; push them directly to the respective drivers.
+  const auto & drivers = driver_ptrs_;
 
-  // WRITE_DRIVER_VALUES
+  if (info_.joints.size() != drivers.size())
+  {
+    RCLCPP_ERROR(
+      get_logger(), "Joint count (%zu) does not match driver count (%zu).",
+      info_.joints.size(), drivers.size());
+    return hardware_interface::return_type::ERROR;
+  }
 
+  for (std::size_t idx = 0; idx < drivers.size(); ++idx)
+  {
+    auto * driver = drivers[idx];
+    const auto & joint = info_.joints[idx];
+
+    if (driver == nullptr)
+    {
+      RCLCPP_ERROR(get_logger(), "Driver for joint '%s' not initialized.", joint.name.c_str());
+      return hardware_interface::return_type::ERROR;
+    }
+
+    try
+    {
+      const double cmd_velocity =
+        get_command<double>(joint.name + "/" + hardware_interface::HW_IF_VELOCITY);
+      driver->setSpeed(0, static_cast<float>(cmd_velocity));
+    }
+    catch (const std::exception & e)
+    {
+      RCLCPP_ERROR(
+        get_logger(), "Failed to write command for joint '%s': %s", joint.name.c_str(), e.what());
+      return hardware_interface::return_type::ERROR;
+    }
+  }
 
   return hardware_interface::return_type::OK;
 }
