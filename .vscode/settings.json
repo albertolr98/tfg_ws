@@ -75,5 +75,6 @@
         "bitset": "cpp"
     },
     "ros.distro": "jazzy",
+    "cmake.ignoreCMakeListsMissing": true,
     
 }
