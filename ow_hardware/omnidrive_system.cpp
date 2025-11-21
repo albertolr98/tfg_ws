@@ -30,9 +30,11 @@
 
 namespace ow_hardware
 {
+
 hardware_interface::CallbackReturn OmnidriveSystemHardware::on_init(
   const hardware_interface::HardwareComponentInterfaceParams & params)
 {
+  // Primero llamamos al init del padre para que gestione lo básico
   if (
     hardware_interface::SystemInterface::on_init(params) !=
     hardware_interface::CallbackReturn::SUCCESS)
@@ -40,6 +42,7 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_init(
     return hardware_interface::CallbackReturn::ERROR;
   }
 
+  // Verifico que la configuración del URDF (ros2_control.xacro) sea la correcta para mi robot
   for (const hardware_interface::ComponentInfo & joint : info_.joints)
   {
     // Omnidrive tiene 1 interfaz de comando (velocidad) y 2 de estado (posición y velocidad)
@@ -87,68 +90,87 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_init(
     }
   }
 
+  // Leo los parámetros de hardware del URDF (pines GPIO, bus SPI, etc.)
   try
   {
-  cfg_.front_wheel_cs_gpio = std::stoi(
-    info_.hardware_parameters.at("front_wheel_cs_gpio"));
-  cfg_.front_wheel_en_gpio = std::stoi(
-    info_.hardware_parameters.at("front_wheel_en_gpio"));
-  cfg_.left_wheel_cs_gpio = std::stoi(
-    info_.hardware_parameters.at("left_wheel_cs_gpio"));
-  cfg_.left_wheel_en_gpio = std::stoi(
-    info_.hardware_parameters.at("left_wheel_en_gpio"));
-  cfg_.right_wheel_cs_gpio = std::stoi(
-    info_.hardware_parameters.at("right_wheel_cs_gpio"));
-  cfg_.right_wheel_en_gpio = std::stoi(
-    info_.hardware_parameters.at("right_wheel_en_gpio"));
+    cfg_.front_wheel_cs_gpio = std::stoi(info_.hardware_parameters.at("front_wheel_cs_gpio"));
+    cfg_.front_wheel_en_gpio = std::stoi(info_.hardware_parameters.at("front_wheel_en_gpio"));
+    cfg_.left_wheel_cs_gpio = std::stoi(info_.hardware_parameters.at("left_wheel_cs_gpio"));
+    cfg_.left_wheel_en_gpio = std::stoi(info_.hardware_parameters.at("left_wheel_en_gpio"));
+    cfg_.right_wheel_cs_gpio = std::stoi(info_.hardware_parameters.at("right_wheel_cs_gpio"));
+    cfg_.right_wheel_en_gpio = std::stoi(info_.hardware_parameters.at("right_wheel_en_gpio"));
 
-  cfg_.spi_device = std::string(
-    info_.hardware_parameters.at("spi_device"));
-  cfg_.spi_speed_hz = std::stoi(
-    info_.hardware_parameters.at("spi_speed_hz"));
-    
+    cfg_.spi_device = std::string(info_.hardware_parameters.at("spi_device"));
+    cfg_.spi_speed_hz = std::stoi(info_.hardware_parameters.at("spi_speed_hz"));
   }
   catch(const std::exception& e)
   {
-    std::cerr << e.what() << '\n';
+    std::cerr << "Error leyendo parámetros: " << e.what() << '\n';
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  // Instanciar la comunicación SPI
-  comms_ = std::make_unique<SPIBus>();
-
-  // Inicializar los drivers de los motores con los pines configurados
-  driver_front_wheel_ = std::make_unique<TMC5160>(
-    cfg_.front_wheel_cs_gpio, cfg_.front_wheel_en_gpio);
-  driver_left_wheel_ = std::make_unique<TMC5160>(
-    cfg_.left_wheel_cs_gpio, cfg_.left_wheel_en_gpio);
-  driver_right_wheel_ = std::make_unique<TMC5160>(
-    cfg_.right_wheel_cs_gpio, cfg_.right_wheel_en_gpio);
-  driver_ptrs_ = {{
-    driver_front_wheel_.get(), driver_left_wheel_.get(), driver_right_wheel_.get()}};
-
-
+  // NOTA: He movido la instanciación de los drivers a on_activate.
+  // Si los creo aquí, se registran antes de que el bus SPI esté listo y
+  // luego SPIBus::init() me borra la configuración.
+  
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
 hardware_interface::CallbackReturn OmnidriveSystemHardware::on_configure(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
-  // TODO(alr): Reset state/command interfaces and push configuration to the TMC driver
-  // (current limits, microstepping, ramp parameters, etc.).
-
+  // Aquí podría resetear interfaces o configuraciones extra si hiciera falta en el futuro.
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
 hardware_interface::CallbackReturn OmnidriveSystemHardware::on_activate(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
+  RCLCPP_INFO(get_logger(), "Activando OmnidriveSystemHardware...");
 
+  // 1. Instancio e inicializo el Bus SPI PRIMERO.
+  // Esto es crucial: SPIBus::init reinicia el registro de dispositivos.
+  comms_ = std::make_unique<SPIBus>();
+  if (!comms_->init(cfg_.spi_device.c_str(), static_cast<uint32_t>(cfg_.spi_speed_hz))) {
+      RCLCPP_ERROR(get_logger(), "Fallo al inicializar SPIBus en %s", cfg_.spi_device.c_str());
+      return hardware_interface::CallbackReturn::ERROR;
+  }
 
-  // Iniciamos la comunicación SPI
-  comms_->init(cfg_.spi_device.c_str(), static_cast<uint32_t>(cfg_.spi_speed_hz));
+  std::cout<<"Pines de CS configurados: "
+           <<cfg_.front_wheel_cs_gpio<<", "
+           <<cfg_.left_wheel_cs_gpio<<", "
+           <<cfg_.right_wheel_cs_gpio<<std::endl;
 
-  // Check de comunicación con los drivers
+  // 2. Ahora sí, instancio los drivers TMC5160.
+  // Al construirse ahora, registrarán sus pines CS en el bus ya inicializado.
+  // OJO: Si el constructor admite ID, pásalo aquí. Si no, asumo que lo gestiona internamente.
+  driver_front_wheel_ = std::make_unique<TMC5160>(
+    cfg_.front_wheel_cs_gpio, cfg_.front_wheel_en_gpio);
+  driver_left_wheel_ = std::make_unique<TMC5160>(
+    cfg_.left_wheel_cs_gpio, cfg_.left_wheel_en_gpio);
+  driver_right_wheel_ = std::make_unique<TMC5160>(
+    cfg_.right_wheel_cs_gpio, cfg_.right_wheel_en_gpio);
+
+  // 3. Actualizo el array de punteros para usarlos en read/write
+  driver_ptrs_ = {{
+    driver_front_wheel_.get(), driver_left_wheel_.get(), driver_right_wheel_.get()
+  }};
+
+  // 4. Inicializo los drivers (registran CS en el bus)
+  if (!driver_front_wheel_->init()) {
+    RCLCPP_ERROR(get_logger(), "Fallo al inicializar el driver de la rueda frontal");
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+  if (!driver_left_wheel_->init()) {
+    RCLCPP_ERROR(get_logger(), "Fallo al inicializar el driver de la rueda izquierda");
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+  if (!driver_right_wheel_->init()) {
+    RCLCPP_ERROR(get_logger(), "Fallo al inicializar el driver de la rueda derecha");
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+
+  // 5. Verifico que puedo hablar con cada driver (requiere CS ya registrado)
   if (!driver_front_wheel_->checkComms("Front Wheel")) {
     RCLCPP_ERROR(get_logger(), "Fallo de comunicación con el driver de la rueda frontal");
     return hardware_interface::CallbackReturn::ERROR;
@@ -161,24 +183,29 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_activate(
     RCLCPP_ERROR(get_logger(), "Fallo de comunicación con el driver de la rueda derecha");
     return hardware_interface::CallbackReturn::ERROR;
   }
-
-  // Habilitamos los drivers
-  driver_front_wheel_->init();
-  driver_left_wheel_->init();
-  driver_right_wheel_->init();
   
+  RCLCPP_INFO(get_logger(), "Sistema activado y motores listos.");
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
 hardware_interface::CallbackReturn OmnidriveSystemHardware::on_deactivate(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
-  // Deshabilitamos los drivers
-  driver_front_wheel_->shutdown();
-  driver_left_wheel_->shutdown();
-  driver_right_wheel_->shutdown();  
+  RCLCPP_INFO(get_logger(), "Desactivando OmnidriveSystemHardware...");
+
+  // Apago los motores por seguridad
+  if (driver_front_wheel_) driver_front_wheel_->shutdown();
+  if (driver_left_wheel_) driver_left_wheel_->shutdown();
+  if (driver_right_wheel_) driver_right_wheel_->shutdown();  
   
-  comms_->close();
+  // Cierro la comunicación SPI
+  if (comms_) comms_->close();
+
+  // Libero la memoria para asegurar una reinicialización limpia la próxima vez
+  driver_front_wheel_.reset();
+  driver_left_wheel_.reset();
+  driver_right_wheel_.reset();
+  comms_.reset();
 
   return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -186,13 +213,14 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_deactivate(
 hardware_interface::return_type OmnidriveSystemHardware::read(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
-  // Read wheel states and publish them in joint-state interfaces (radians / rad*s^-1).
+  // Leo el estado de las ruedas (posición y velocidad) y lo publico en las interfaces
   const auto & drivers = driver_ptrs_;
 
+  // Comprobación de seguridad por si acaso
   if (info_.joints.size() != drivers.size())
   {
-    RCLCPP_ERROR(
-      get_logger(), "Joint count (%zu) does not match driver count (%zu).",
+    RCLCPP_ERROR_THROTTLE(
+      get_logger(), *get_clock(), 1000, "Joint count (%zu) does not match driver count (%zu).",
       info_.joints.size(), drivers.size());
     return hardware_interface::return_type::ERROR;
   }
@@ -200,16 +228,16 @@ hardware_interface::return_type OmnidriveSystemHardware::read(
   for (std::size_t idx = 0; idx < drivers.size(); ++idx)
   {
     auto * driver = drivers[idx];
-    const auto & joint = info_.joints[idx];
-
-    if (driver == nullptr)
-    {
-      RCLCPP_ERROR(get_logger(), "Driver for joint '%s' not initialized.", joint.name.c_str());
-      return hardware_interface::return_type::ERROR;
+    // Ojo: si el driver es null (algo falló en activate), no puedo leer
+    if (driver == nullptr) {
+        continue; 
     }
+
+    const auto & joint = info_.joints[idx];
 
     try
     {
+      // Nota: readPosition/Speed devuelve int/float, hago cast a double para ROS
       const double position = static_cast<double>(driver->readPosition(0));
       const double velocity = static_cast<double>(driver->readSpeed(0));
 
@@ -218,8 +246,8 @@ hardware_interface::return_type OmnidriveSystemHardware::read(
     }
     catch (const std::exception & e)
     {
-      RCLCPP_ERROR(
-        get_logger(), "Failed to read state for joint '%s': %s", joint.name.c_str(), e.what());
+      RCLCPP_ERROR_THROTTLE(
+        get_logger(), *get_clock(), 1000, "Failed to read state for joint '%s': %s", joint.name.c_str(), e.what());
       return hardware_interface::return_type::ERROR;
     }
   }
@@ -230,38 +258,35 @@ hardware_interface::return_type OmnidriveSystemHardware::read(
 hardware_interface::return_type ow_hardware::OmnidriveSystemHardware::write(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
-  // Commands arrive in rad/s; push them directly to the respective drivers.
+  // Envío los comandos de velocidad (rad/s) a los drivers
   const auto & drivers = driver_ptrs_;
 
   if (info_.joints.size() != drivers.size())
   {
-    RCLCPP_ERROR(
-      get_logger(), "Joint count (%zu) does not match driver count (%zu).",
-      info_.joints.size(), drivers.size());
     return hardware_interface::return_type::ERROR;
   }
 
   for (std::size_t idx = 0; idx < drivers.size(); ++idx)
   {
     auto * driver = drivers[idx];
-    const auto & joint = info_.joints[idx];
-
-    if (driver == nullptr)
-    {
-      RCLCPP_ERROR(get_logger(), "Driver for joint '%s' not initialized.", joint.name.c_str());
-      return hardware_interface::return_type::ERROR;
+    if (driver == nullptr) {
+        continue;
     }
+
+    const auto & joint = info_.joints[idx];
 
     try
     {
       const double cmd_velocity =
         get_command<double>(joint.name + "/" + hardware_interface::HW_IF_VELOCITY);
+      
+      // Mando la velocidad al motor (ID 0 para un solo motor por driver)
       driver->setSpeed(0, static_cast<float>(cmd_velocity));
     }
     catch (const std::exception & e)
     {
-      RCLCPP_ERROR(
-        get_logger(), "Failed to write command for joint '%s': %s", joint.name.c_str(), e.what());
+      RCLCPP_ERROR_THROTTLE(
+        get_logger(), *get_clock(), 1000, "Failed to write command for joint '%s': %s", joint.name.c_str(), e.what());
       return hardware_interface::return_type::ERROR;
     }
   }
