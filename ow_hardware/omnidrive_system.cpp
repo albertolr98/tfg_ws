@@ -170,6 +170,11 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_activate(
     return hardware_interface::CallbackReturn::ERROR;
   }
 
+  // 5. Aseguro que arrancan parados tras una reactivación
+  driver_front_wheel_->setSpeed(0, 0.0f);
+  driver_left_wheel_->setSpeed(0, 0.0f);
+  driver_right_wheel_->setSpeed(0, 0.0f);
+
   // 5. Verifico que puedo hablar con cada driver (requiere CS ya registrado)
   if (!driver_front_wheel_->checkComms("Front Wheel")) {
     RCLCPP_ERROR(get_logger(), "Fallo de comunicación con el driver de la rueda frontal");
