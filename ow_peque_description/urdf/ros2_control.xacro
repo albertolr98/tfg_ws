@@ -60,8 +60,13 @@
             <param name="right_wheel_en_gpio">23</param>
             <param name="spi_device">/dev/spidev0.0</param>
             <param name="spi_speed_hz">1000000</param>
+            <!-- invertir sentido si una rueda gira al revés físicamente -->
+            <param name="front_wheel_inverted">true</param>
+            <param name="left_wheel_inverted">true</param>
+            <param name="right_wheel_inverted">true</param>
         </hardware>
-        <joint name="base_left_wheel_joint">
+
+        <joint name="base_front_wheel_joint">
             <command_interface name="velocity">
                 <param name="min">-5.0</param>
                 <param name="max">5.0</param>
@@ -71,7 +76,7 @@
             <state_interface name="velocity"/>
         </joint>
 
-        <joint name="base_front_wheel_joint">
+        <joint name="base_left_wheel_joint">
             <command_interface name="velocity">
                 <param name="min">-5.0</param>
                 <param name="max">5.0</param>

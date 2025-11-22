@@ -39,6 +39,8 @@ namespace ow_hardware
 class OmnidriveSystemHardware : public hardware_interface::SystemInterface
 {
 
+  static constexpr std::size_t kWheelCount = 3;
+
 struct Config
 {
   unsigned int front_wheel_cs_gpio;
@@ -50,6 +52,8 @@ struct Config
 
   std::string spi_device;
   int spi_speed_hz;
+  // Sign multiplier for each wheel (+1 normal, -1 invert direction)
+  std::array<double, kWheelCount> wheel_signs{{1.0, 1.0, 1.0}};
 };
 
 
@@ -75,8 +79,6 @@ public:
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 private:
-  static constexpr std::size_t kWheelCount = 3;
-
   std::unique_ptr<SPIBus> comms_;
   Config cfg_;
   std::unique_ptr<TMC5160> driver_front_wheel_;

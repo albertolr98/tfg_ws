@@ -12,7 +12,7 @@ controller_manager:
 
 omni_wheel_drive_controller:
   ros__parameters:
-    wheel_offset: 1.5708  # 90 degrees in radians
+    wheel_offset: 2.095 # 120 grados en radianes
     wheel_names:
       [
         "base_front_wheel_joint",
@@ -24,11 +24,11 @@ omni_wheel_drive_controller:
     wheel_radius: 0.029
 
     odom_frame_id: odom
-    base_frame_id: base_link
+    base_frame_id: base_footprint
     pose_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.001]
     twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.001]
 
-    open_loop: true
+    open_loop: false
     position_feedback: true
     enable_odom_tf: true
 

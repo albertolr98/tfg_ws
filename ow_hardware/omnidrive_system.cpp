@@ -102,6 +102,18 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_init(
 
     cfg_.spi_device = std::string(info_.hardware_parameters.at("spi_device"));
     cfg_.spi_speed_hz = std::stoi(info_.hardware_parameters.at("spi_speed_hz"));
+
+    const auto invert_flag = [&](const std::string & key) {
+      auto it = info_.hardware_parameters.find(key);
+      if (it == info_.hardware_parameters.end()) return false;
+      const auto & v = it->second;
+      return (v == "true" || v == "True" || v == "1");
+    };
+
+    // Orden de signs: front, left, right (coincide con joints hardware en ros2_control.xacro)
+    cfg_.wheel_signs[0] = invert_flag("front_wheel_inverted") ? -1.0 : 1.0;
+    cfg_.wheel_signs[1] = invert_flag("left_wheel_inverted") ? -1.0 : 1.0;
+    cfg_.wheel_signs[2] = invert_flag("right_wheel_inverted") ? -1.0 : 1.0;
   }
   catch(const std::exception& e)
   {
@@ -152,6 +164,7 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_activate(
     cfg_.right_wheel_cs_gpio, cfg_.right_wheel_en_gpio);
 
   // 3. Actualizo el array de punteros para usarlos en read/write
+  // El orden debe coincidir con info_.joints (hardware en ros2_control.xacro): front, left, right.
   driver_ptrs_ = {{
     driver_front_wheel_.get(), driver_left_wheel_.get(), driver_right_wheel_.get()
   }};
@@ -239,12 +252,13 @@ hardware_interface::return_type OmnidriveSystemHardware::read(
     }
 
     const auto & joint = info_.joints[idx];
+    const double sign = cfg_.wheel_signs[idx];
 
     try
     {
       // Nota: readPosition/Speed devuelve int/float, hago cast a double para ROS
-      const double position = static_cast<double>(driver->readPosition(0));
-      const double velocity = static_cast<double>(driver->readSpeed(0));
+      const double position = static_cast<double>(driver->readPosition(0)) * sign;
+      const double velocity = static_cast<double>(driver->readSpeed(0)) * sign;
 
       set_state(joint.name + "/" + hardware_interface::HW_IF_POSITION, position);
       set_state(joint.name + "/" + hardware_interface::HW_IF_VELOCITY, velocity);
@@ -279,6 +293,7 @@ hardware_interface::return_type ow_hardware::OmnidriveSystemHardware::write(
     }
 
     const auto & joint = info_.joints[idx];
+    const double sign = cfg_.wheel_signs[idx];
 
     try
     {
@@ -286,7 +301,7 @@ hardware_interface::return_type ow_hardware::OmnidriveSystemHardware::write(
         get_command<double>(joint.name + "/" + hardware_interface::HW_IF_VELOCITY);
       
       // Mando la velocidad al motor (ID 0 para un solo motor por driver)
-      driver->setSpeed(0, static_cast<float>(cmd_velocity));
+      driver->setSpeed(0, static_cast<float>(cmd_velocity * sign));
     }
     catch (const std::exception & e)
     {
