@@ -103,6 +103,7 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_init(
     cfg_.spi_device = std::string(info_.hardware_parameters.at("spi_device"));
     cfg_.spi_speed_hz = std::stoi(info_.hardware_parameters.at("spi_speed_hz"));
 
+    // Función que permite saber si la rueda tiene el giro invertido
     const auto invert_flag = [&](const std::string & key) {
       auto it = info_.hardware_parameters.find(key);
       if (it == info_.hardware_parameters.end()) return false;
@@ -110,7 +111,7 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_init(
       return (v == "true" || v == "True" || v == "1");
     };
 
-    // Orden de signs: front, left, right (coincide con joints hardware en ros2_control.xacro)
+    // Configuro los signos de cada rueda según el parámetro
     cfg_.wheel_signs[0] = invert_flag("front_wheel_inverted") ? -1.0 : 1.0;
     cfg_.wheel_signs[1] = invert_flag("left_wheel_inverted") ? -1.0 : 1.0;
     cfg_.wheel_signs[2] = invert_flag("right_wheel_inverted") ? -1.0 : 1.0;
@@ -121,9 +122,6 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_init(
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  // NOTA: He movido la instanciación de los drivers a on_activate.
-  // Si los creo aquí, se registran antes de que el bus SPI esté listo y
-  // luego SPIBus::init() me borra la configuración.
   
   return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -140,8 +138,7 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_activate(
 {
   RCLCPP_INFO(get_logger(), "Activando OmnidriveSystemHardware...");
 
-  // 1. Instancio e inicializo el Bus SPI PRIMERO.
-  // Esto es crucial: SPIBus::init reinicia el registro de dispositivos.
+  // 1. Instancio e inicializo el Bus SPI. Necesita estar listo antes que los drivers.
   comms_ = std::make_unique<SPIBus>();
   if (!comms_->init(cfg_.spi_device.c_str(), static_cast<uint32_t>(cfg_.spi_speed_hz))) {
       RCLCPP_ERROR(get_logger(), "Fallo al inicializar SPIBus en %s", cfg_.spi_device.c_str());
@@ -259,6 +256,9 @@ hardware_interface::return_type OmnidriveSystemHardware::read(
       // Nota: readPosition/Speed devuelve int/float, hago cast a double para ROS
       const double position = static_cast<double>(driver->readPosition()) * sign;
       const double velocity = static_cast<double>(driver->readSpeed()) * sign;
+
+      // std::cout<<"Rueda "<<joint.name<<": Posición leída = "<<position
+      //     <<", Velocidad leída = "<<velocity<<std::endl;
 
       set_state(joint.name + "/" + hardware_interface::HW_IF_POSITION, position);
       set_state(joint.name + "/" + hardware_interface::HW_IF_VELOCITY, velocity);
