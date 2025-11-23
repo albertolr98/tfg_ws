@@ -5,14 +5,13 @@ controller_manager:
     joint_broad:
       type: "joint_state_broadcaster/JointStateBroadcaster"
 
-    # Instalador por defecto en jazzy con ros-jazzy-ros2-controllers
     omni_wheel_drive_controller:
       type: "omni_wheel_drive_controller/OmniWheelDriveController"
 
 
 omni_wheel_drive_controller:
   ros__parameters:
-    wheel_offset: 2.095 # 120 grados en radianes
+    wheel_offset: 0.0
     wheel_names:
       [
         "base_front_wheel_joint",
@@ -32,4 +31,4 @@ omni_wheel_drive_controller:
     position_feedback: true
     enable_odom_tf: true
 
-    cmd_vel_timeout: 0.5
+    cmd_vel_timeout: 1.0
