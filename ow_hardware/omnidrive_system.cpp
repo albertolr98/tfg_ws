@@ -184,9 +184,9 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_activate(
   }
 
   // 5. Aseguro que arrancan parados tras una reactivación
-  driver_front_wheel_->setSpeed(0, 0.0f);
-  driver_left_wheel_->setSpeed(0, 0.0f);
-  driver_right_wheel_->setSpeed(0, 0.0f);
+  driver_front_wheel_->setSpeed(0.0f);
+  driver_left_wheel_->setSpeed(0.0f);
+  driver_right_wheel_->setSpeed(0.0f);
 
   // 5. Verifico que puedo hablar con cada driver (requiere CS ya registrado)
   if (!driver_front_wheel_->checkComms("Front Wheel")) {
@@ -257,8 +257,8 @@ hardware_interface::return_type OmnidriveSystemHardware::read(
     try
     {
       // Nota: readPosition/Speed devuelve int/float, hago cast a double para ROS
-      const double position = static_cast<double>(driver->readPosition(0)) * sign;
-      const double velocity = static_cast<double>(driver->readSpeed(0)) * sign;
+      const double position = static_cast<double>(driver->readPosition()) * sign;
+      const double velocity = static_cast<double>(driver->readSpeed()) * sign;
 
       set_state(joint.name + "/" + hardware_interface::HW_IF_POSITION, position);
       set_state(joint.name + "/" + hardware_interface::HW_IF_VELOCITY, velocity);
@@ -301,7 +301,7 @@ hardware_interface::return_type ow_hardware::OmnidriveSystemHardware::write(
         get_command<double>(joint.name + "/" + hardware_interface::HW_IF_VELOCITY);
       
       // Mando la velocidad al motor (ID 0 para un solo motor por driver)
-      driver->setSpeed(0, static_cast<float>(cmd_velocity * sign));
+      driver->setSpeed(static_cast<float>(cmd_velocity * sign));
     }
     catch (const std::exception & e)
     {
