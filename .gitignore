@@ -1,1 +1,7 @@
 **/build/
+**/install/
+**/log/
+**/devel/
+**/colcon
+**__pycache__/
+

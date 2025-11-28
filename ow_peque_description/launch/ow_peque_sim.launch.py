@@ -78,6 +78,16 @@ def generate_launch_description():
         output="screen",
     )
 
+    velocity_bridge = Node(
+        package="ow_control",
+        executable="linear_ramp",
+        name="velocity_bridge",
+        remappings=[
+            ("cmd_vel_input", "/cmd_vel"),
+            ("cmd_vel_out", "/omni_wheel_drive_controller/cmd_vel"),
+        ],
+        )
+
     return LaunchDescription(
         [
             DeclareLaunchArgument(
@@ -111,6 +121,7 @@ def generate_launch_description():
             clock_bridge,
             robot_state_publisher,
             spawn_entity,
+            velocity_bridge,
             TimerAction(period=2.0, actions=[joint_broadcaster_spawner]),
             TimerAction(period=4.0, actions=[omni_spawner]),
         ]
