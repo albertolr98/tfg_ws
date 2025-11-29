@@ -22,7 +22,7 @@ class LinearRampNode(Node):
         
         # Suscriptor (Escucha al teclado/joystick)
         self.sub = self.create_subscription(
-            Twist,
+            TwistStamped,
             'cmd_vel_input', # Entrada
             self.cmd_vel_callback,
             10)
@@ -37,15 +37,15 @@ class LinearRampNode(Node):
         self.timer = self.create_timer(self.step_period, self.control_loop)
 
     def cmd_vel_callback(self, msg):
-        self.target_vel = msg
+        self.target_vel = msg.twist
         
         # 1. Calculamos cuántos pasos daremos en total (ej: 20 pasos en 1 segundo)
         total_steps = self.frequency * self.ramp_time
         
         # 2. Calculamos cuánto hay que sumar en X, Y y Theta en cada paso
-        self.inc_x = (msg.linear.x - self.current_vel.linear.x) / total_steps
-        self.inc_y = (msg.linear.y - self.current_vel.linear.y) / total_steps
-        self.inc_theta = (msg.angular.z - self.current_vel.angular.z) / total_steps
+        self.inc_x = (self.target_vel.linear.x - self.current_vel.linear.x) / total_steps
+        self.inc_y = (self.target_vel.linear.y - self.current_vel.linear.y) / total_steps
+        self.inc_theta = (self.target_vel.angular.z - self.current_vel.angular.z) / total_steps
         
     def get_next_velocity(self, current, target, increment):
         distancia = target - current
@@ -75,6 +75,10 @@ class LinearRampNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = LinearRampNode()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
