@@ -9,6 +9,17 @@
                 <specular>0.1 0.1 0.1 1.0</specular>
             </material>
         </visual>
+        <sensor name="imu_sensor" type="imu">
+            <always_on>1</always_on>
+            <update_rate>100</update_rate>
+            <visualize>true</visualize>
+            <topic>imu</topic>
+        </sensor>
+    </gazebo>
+
+    <gazebo>
+      <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu">
+      </plugin>
     </gazebo>
 
     <gazebo reference="bottom_cover_link">
