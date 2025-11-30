@@ -62,9 +62,21 @@ def generate_launch_description():
         )
     )
 
+    # 6. Nodo de Rampa Lineal (Suavizado de velocidad)
+    # Intercepta /cmd_vel_input y publica en /cmd_vel suavizado
+    linear_ramp_node = Node(
+        package="ow_control",
+        executable="linear_ramp",
+        name="linear_ramp_node",
+        remappings=[
+            ("cmd_vel_out", "/omni_wheel_drive_controller/cmd_vel"),
+        ]
+    )
+
     return LaunchDescription([
         node_robot_state_publisher,  # <--- Añadido aquí
         control_node,
         joint_state_broadcaster_spawner,
         delay_omni_controller,
+        linear_ramp_node,
     ])
