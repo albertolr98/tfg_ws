@@ -310,8 +310,16 @@ hardware_interface::return_type ow_hardware::OmnidriveSystemHardware::write(
     const auto & joint = info_.joints[idx];
     try
     {
-      target_vels_[idx] = get_command<double>(joint.name + "/" + hardware_interface::HW_IF_VELOCITY);
+      double cmd = get_command<double>(joint.name + "/" + hardware_interface::HW_IF_VELOCITY);
+      if (std::isnan(cmd)) {
+        cmd = 0.0;
+      }
+      target_vels_[idx] = cmd;
       
+      if (std::isnan(current_vels_[idx])) {
+        current_vels_[idx] = 0.0;
+      }
+
       double delta_v = std::abs(target_vels_[idx] - current_vels_[idx]);
       double time_needed = delta_v / max_accel;
       
