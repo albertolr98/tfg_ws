@@ -190,7 +190,6 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_activate(
   // Reset ramp state
   current_vels_.fill(0.0);
   target_vels_.fill(0.0);
-  // slopes_.fill(0.0);
 
   // 5. Verifico que puedo hablar con cada driver (requiere CS ya registrado)
   if (!driver_front_wheel_->checkComms("Front Wheel")) {
@@ -347,6 +346,13 @@ hardware_interface::return_type ow_hardware::OmnidriveSystemHardware::write(
     // Avanzamos current_vel hacia target_vel usando el factor de escala
     double diff = target_vels_[idx] - current_vels_[idx];
     current_vels_[idx] += diff * scale;
+
+    // Debug print every 1 second
+    if (idx == 0) { // Only print for first wheel to avoid spam
+        RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 1000, 
+            "dt: %.4f, max_req: %.4f, scale: %.4f, tgt: %.2f, curr: %.2f",
+            dt, max_req_time, scale, target_vels_[idx], current_vels_[idx]);
+    }
 
     try
     {
