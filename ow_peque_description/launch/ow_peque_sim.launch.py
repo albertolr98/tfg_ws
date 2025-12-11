@@ -78,16 +78,16 @@ def generate_launch_description():
         output="screen",
     )
 
-    velocity_bridge = Node(
-        package="ow_control",
-        executable="linear_ramp",
-        name="velocity_bridge",
-        parameters=[{"use_sim_time": use_sim_time}],
-        remappings=[
-            ("cmd_vel_input", "/cmd_vel"),
-            ("cmd_vel_out", "/omni_wheel_drive_controller/cmd_vel"),
-        ],
-    )
+    # velocity_bridge = Node(
+    #     package="ow_control",
+    #     executable="linear_ramp",
+    #     name="velocity_bridge",
+    #     parameters=[{"use_sim_time": use_sim_time}],
+    #     remappings=[
+    #         ("cmd_vel_input", "/cmd_vel"),
+    #         ("cmd_vel_out", "/omni_wheel_drive_controller/cmd_vel"),
+    #     ],
+    # )
 
     joy_node = Node(
         package="joy",
@@ -105,6 +105,9 @@ def generate_launch_description():
                 [FindPackageShare("ow_peque_description"), "config", "ps5_controller.yaml"]
             ),
             {"use_sim_time": use_sim_time},
+        ],
+        remappings=[
+            ("cmd_vel", "/omni_wheel_drive_controller/cmd_vel"),
         ],
         output="screen",
     )
@@ -142,7 +145,7 @@ def generate_launch_description():
             clock_bridge,
             robot_state_publisher,
             spawn_entity,
-            velocity_bridge,
+            # velocity_bridge,
             joy_node,
             teleop_node,
             TimerAction(period=2.0, actions=[joint_broadcaster_spawner]),

@@ -50,6 +50,8 @@ struct Config
   unsigned int right_wheel_cs_gpio;
   unsigned int right_wheel_en_gpio;
 
+  double accel_time;
+
   std::string spi_device;
   int spi_speed_hz;
   // Sign multiplier for each wheel (+1 normal, -1 invert direction)
@@ -85,6 +87,11 @@ private:
   std::unique_ptr<TMC5160> driver_left_wheel_;
   std::unique_ptr<TMC5160> driver_right_wheel_;
   std::array<TMC5160 *, kWheelCount> driver_ptrs_{};
+
+  // Ramp state
+  std::array<double, kWheelCount> current_vels_{{0.0, 0.0, 0.0}};
+  std::array<double, kWheelCount> target_vels_{{0.0, 0.0, 0.0}};
+  std::array<double, kWheelCount> slopes_{{0.0, 0.0, 0.0}};
 };
 
 }  // namespace ow_hardware

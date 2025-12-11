@@ -103,6 +103,8 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_init(
     cfg_.spi_device = std::string(info_.hardware_parameters.at("spi_device"));
     cfg_.spi_speed_hz = std::stoi(info_.hardware_parameters.at("spi_speed_hz"));
 
+    cfg_.accel_time = std::stod(info_.hardware_parameters.at("accel_time"));
+
     // Función que permite saber si la rueda tiene el giro invertido
     const auto invert_flag = [&](const std::string & key) {
       auto it = info_.hardware_parameters.find(key);
@@ -184,6 +186,11 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_activate(
   driver_front_wheel_->setSpeed(0.0f);
   driver_left_wheel_->setSpeed(0.0f);
   driver_right_wheel_->setSpeed(0.0f);
+
+  // Reset ramp state
+  current_vels_.fill(0.0);
+  target_vels_.fill(0.0);
+  slopes_.fill(0.0);
 
   // 5. Verifico que puedo hablar con cada driver (requiere CS ya registrado)
   if (!driver_front_wheel_->checkComms("Front Wheel")) {
@@ -275,7 +282,7 @@ hardware_interface::return_type OmnidriveSystemHardware::read(
 }
 
 hardware_interface::return_type ow_hardware::OmnidriveSystemHardware::write(
-  const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
+  const rclcpp::Time & /*time*/, const rclcpp::Duration & period)
 {
   // Envío los comandos de velocidad (rad/s) a los drivers
   const auto & drivers = driver_ptrs_;
@@ -284,6 +291,8 @@ hardware_interface::return_type ow_hardware::OmnidriveSystemHardware::write(
   {
     return hardware_interface::return_type::ERROR;
   }
+
+  const double dt = period.seconds();
 
   for (std::size_t idx = 0; idx < drivers.size(); ++idx)
   {
@@ -300,8 +309,35 @@ hardware_interface::return_type ow_hardware::OmnidriveSystemHardware::write(
       const double cmd_velocity =
         get_command<double>(joint.name + "/" + hardware_interface::HW_IF_VELOCITY);
       
+      // --- Ramp Logic ---
+      // 1. Check if target changed
+      if (std::abs(cmd_velocity - target_vels_[idx]) > 1e-5)
+      {
+        target_vels_[idx] = cmd_velocity;
+        // Calculate slope: (target - current) / time
+        // Avoid division by zero if accel_time is very small
+        double time = (cfg_.accel_time > 1e-3) ? cfg_.accel_time : 1e-3;
+        slopes_[idx] = (target_vels_[idx] - current_vels_[idx]) / time;
+      }
+
+      // 2. Apply step
+      double step = slopes_[idx] * dt;
+      
+      // 3. Check overshooting
+      // If distance to target is smaller than step, just go to target
+      if (std::abs(target_vels_[idx] - current_vels_[idx]) <= std::abs(step))
+      {
+        current_vels_[idx] = target_vels_[idx];
+        slopes_[idx] = 0.0; // Reached target
+      }
+      else
+      {
+        current_vels_[idx] += step;
+      }
+
       // Mando la velocidad al motor (ID 0 para un solo motor por driver)
-      driver->setSpeed(static_cast<float>(cmd_velocity * sign));
+      // Use current_vels_ instead of raw cmd_velocity
+      driver->setSpeed(static_cast<float>(current_vels_[idx] * sign));
     }
     catch (const std::exception & e)
     {

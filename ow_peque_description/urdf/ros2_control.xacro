@@ -60,6 +60,7 @@
             <param name="right_wheel_en_gpio">23</param>
             <param name="spi_device">/dev/spidev0.0</param>
             <param name="spi_speed_hz">4000000</param>
+            <param name="accel_time">1.0</param>
             <!-- invertir sentido si una rueda gira al revés físicamente -->
             <param name="front_wheel_inverted">true</param>
             <param name="left_wheel_inverted">true</param>
