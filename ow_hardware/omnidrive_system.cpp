@@ -355,11 +355,13 @@ hardware_interface::return_type ow_hardware::OmnidriveSystemHardware::write(
     double diff = target_vels_[idx] - current_vels_[idx];
     current_vels_[idx] += diff * scale;
 
-    // Debug print every 1 second
-    if (idx == 0) { // Only print for first wheel to avoid spam
+    // Debug print every 1 second (only once per loop, using idx==0 to trigger)
+    if (idx == drivers.size() - 1) { 
         RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 1000, 
-            "dt: %.4f, max_req: %.4f, scale: %.4f, tgt: %.2f, curr: %.2f",
-            dt, max_req_time, scale, target_vels_[idx], current_vels_[idx]);
+            "dt:%.3f sc:%.2f | T:[%.2f, %.2f, %.2f] C:[%.2f, %.2f, %.2f]",
+            dt, scale, 
+            target_vels_[0], target_vels_[1], target_vels_[2],
+            current_vels_[0], current_vels_[1], current_vels_[2]);
     }
 
     try
