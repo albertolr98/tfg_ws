@@ -190,7 +190,7 @@ hardware_interface::CallbackReturn OmnidriveSystemHardware::on_activate(
   // Reset ramp state
   current_vels_.fill(0.0);
   target_vels_.fill(0.0);
-  slopes_.fill(0.0);
+  // slopes_.fill(0.0);
 
   // 5. Verifico que puedo hablar con cada driver (requiere CS ya registrado)
   if (!driver_front_wheel_->checkComms("Front Wheel")) {
@@ -293,56 +293,69 @@ hardware_interface::return_type ow_hardware::OmnidriveSystemHardware::write(
   }
 
   const double dt = period.seconds();
+  
+  // Parametros de aceleracion
+  // Asumimos 5.0 rad/s como velocidad maxima de referencia
+  const double max_velocity = 5.0; 
+  // Evitar division por cero
+  const double accel_time = (cfg_.accel_time > 1e-3) ? cfg_.accel_time : 1e-3;
+  const double max_accel = max_velocity / accel_time;
+
+  // Paso 1: Leer todos los comandos y calcular el tiempo requerido mas alto
+  double max_req_time = 0.0;
 
   for (std::size_t idx = 0; idx < drivers.size(); ++idx)
   {
-    auto * driver = drivers[idx];
-    if (driver == nullptr) {
-        continue;
-    }
+    if (drivers[idx] == nullptr) continue;
 
     const auto & joint = info_.joints[idx];
+    try
+    {
+      target_vels_[idx] = get_command<double>(joint.name + "/" + hardware_interface::HW_IF_VELOCITY);
+      
+      double delta_v = std::abs(target_vels_[idx] - current_vels_[idx]);
+      double time_needed = delta_v / max_accel;
+      
+      if (time_needed > max_req_time) {
+        max_req_time = time_needed;
+      }
+    }
+    catch (const std::exception & e)
+    {
+      RCLCPP_ERROR_THROTTLE(
+        get_logger(), *get_clock(), 1000, "Failed to get command for joint '%s': %s", joint.name.c_str(), e.what());
+      return hardware_interface::return_type::ERROR;
+    }
+  }
+
+  // Paso 2: Calcular el factor de escala para coordinar las ruedas
+  // Si el tiempo requerido es mayor que dt, escalamos para que todas tarden 'max_req_time'
+  // Esto preserva la direccion del vector de movimiento.
+  double scale = 1.0;
+  if (max_req_time > dt) {
+    scale = dt / max_req_time;
+  }
+
+  // Paso 3: Aplicar velocidades
+  for (std::size_t idx = 0; idx < drivers.size(); ++idx)
+  {
+    auto * driver = drivers[idx];
+    if (driver == nullptr) continue;
+
     const double sign = cfg_.wheel_signs[idx];
+
+    // Avanzamos current_vel hacia target_vel usando el factor de escala
+    double diff = target_vels_[idx] - current_vels_[idx];
+    current_vels_[idx] += diff * scale;
 
     try
     {
-      const double cmd_velocity =
-        get_command<double>(joint.name + "/" + hardware_interface::HW_IF_VELOCITY);
-      
-      // --- Ramp Logic ---
-      // 1. Check if target changed
-      if (std::abs(cmd_velocity - target_vels_[idx]) > 1e-5)
-      {
-        target_vels_[idx] = cmd_velocity;
-        // Calculate slope: (target - current) / time
-        // Avoid division by zero if accel_time is very small
-        double time = (cfg_.accel_time > 1e-3) ? cfg_.accel_time : 1e-3;
-        slopes_[idx] = (target_vels_[idx] - current_vels_[idx]) / time;
-      }
-
-      // 2. Apply step
-      double step = slopes_[idx] * dt;
-      
-      // 3. Check overshooting
-      // If distance to target is smaller than step, just go to target
-      if (std::abs(target_vels_[idx] - current_vels_[idx]) <= std::abs(step))
-      {
-        current_vels_[idx] = target_vels_[idx];
-        slopes_[idx] = 0.0; // Reached target
-      }
-      else
-      {
-        current_vels_[idx] += step;
-      }
-
-      // Mando la velocidad al motor (ID 0 para un solo motor por driver)
-      // Use current_vels_ instead of raw cmd_velocity
       driver->setSpeed(static_cast<float>(current_vels_[idx] * sign));
     }
     catch (const std::exception & e)
     {
       RCLCPP_ERROR_THROTTLE(
-        get_logger(), *get_clock(), 1000, "Failed to write command for joint '%s': %s", joint.name.c_str(), e.what());
+        get_logger(), *get_clock(), 1000, "Failed to write command for joint '%s': %s", info_.joints[idx].name.c_str(), e.what());
       return hardware_interface::return_type::ERROR;
     }
   }

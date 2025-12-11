@@ -91,7 +91,6 @@ private:
   // Ramp state
   std::array<double, kWheelCount> current_vels_{{0.0, 0.0, 0.0}};
   std::array<double, kWheelCount> target_vels_{{0.0, 0.0, 0.0}};
-  std::array<double, kWheelCount> slopes_{{0.0, 0.0, 0.0}};
 };
 
 }  // namespace ow_hardware
