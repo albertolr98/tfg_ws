@@ -1,35 +1,39 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
+    <!-- Base link - Piezas naranjas -->
     <gazebo reference="base_link">
         <visual>
             <material>
-                <ambient>0.0 0.0 1.0 1.0</ambient>
-                <diffuse>0.0 0.0 1.0 1.0</diffuse>
+                <ambient>1.0 0.5 0.0 1.0</ambient>
+                <diffuse>1.0 0.5 0.0 1.0</diffuse>
                 <specular>0.1 0.1 0.1 1.0</specular>
             </material>
         </visual>
     </gazebo>
 
-    <gazebo reference="bottom_cover_link">
+    <!-- Piezas negras -->
+    <gazebo reference="black_parts_link">
         <visual>
             <material>
-                <ambient>1.0 0.0 0.0 1.0</ambient>
-                <diffuse>1.0 0.0 0.0 1.0</diffuse>
+                <ambient>0.1 0.1 0.1 1.0</ambient>
+                <diffuse>0.1 0.1 0.1 1.0</diffuse>
                 <specular>0.1 0.1 0.1 1.0</specular>
             </material>
         </visual>
     </gazebo>
 
-    <gazebo reference="top_cover_link">
+    <!-- Placas electrónicas - verde -->
+    <gazebo reference="placas_link">
         <visual>
             <material>
-                <ambient>1.0 0.0 0.0 1.0</ambient>
-                <diffuse>1.0 0.0 0.0 1.0</diffuse>
+                <ambient>0.0 0.5 0.0 1.0</ambient>
+                <diffuse>0.0 0.5 0.0 1.0</diffuse>
                 <specular>0.1 0.1 0.1 1.0</specular>
             </material>
         </visual>
     </gazebo>
+
 
     <gazebo reference="right_wheel_link">
         <visual>
