@@ -10,7 +10,7 @@ find_package(ament_cmake REQUIRED)
 
 # Directorios usados por colcon
 install(
-  DIRECTORY urdf launch rviz meshes config worlds
+  DIRECTORY urdf launch rviz meshes config worlds scripts
   DESTINATION share/${PROJECT_NAME}/
 )
 

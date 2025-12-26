@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'linear_ramp = ow_control.linear_ramp:main',
+            'joint_state_bridge = ow_control.joint_state_bridge:main',
         ],
     },
 )
