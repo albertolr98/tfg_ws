@@ -8,7 +8,7 @@ This launch file starts all necessary nodes to operate the real ow_peque robot:
 - Controller Manager with OmnidriveSystemHardware plugin
 - Joint State Broadcaster
 - Omni Wheel Drive Controller
-- Optional: Teleop (joy + teleop_twist_joy)
+- Optional: Teleop (joy + teleop_twist_joy) - usually run on PC instead
 """
 from launch import LaunchDescription
 from launch.actions import (
@@ -95,19 +95,7 @@ def generate_launch_description():
         )
     )
 
-    # Velocity ramp node (smooth acceleration)
-    velocity_ramp = Node(
-        package="ow_control",
-        executable="linear_ramp",
-        name="velocity_ramp",
-        remappings=[
-            ("cmd_vel_input", "/cmd_vel"),
-            ("cmd_vel_out", "/omni_wheel_drive_controller/cmd_vel"),
-        ],
-        output="screen",
-    )
-
-    # Joy node (optional, for teleop)
+    # Joy node (optional, for teleop - usually run on PC instead)
     joy_node = Node(
         package="joy",
         executable="joy_node",
@@ -115,7 +103,7 @@ def generate_launch_description():
         condition=IfCondition(enable_teleop),
     )
 
-    # Teleop node (optional)
+    # Teleop node (optional - usually run on PC instead)
     teleop_node = Node(
         package="teleop_twist_joy",
         executable="teleop_node",
@@ -124,6 +112,9 @@ def generate_launch_description():
             PathJoinSubstitution(
                 [FindPackageShare("ow_peque_description"), "config", "ps5_controller.yaml"]
             ),
+        ],
+        remappings=[
+            ("cmd_vel", "/omni_wheel_drive_controller/cmd_vel"),
         ],
         output="screen",
         condition=IfCondition(enable_teleop),
@@ -143,10 +134,8 @@ def generate_launch_description():
             # Wait for controller_manager to be ready before spawning controllers
             TimerAction(period=2.0, actions=[joint_broadcaster_spawner]),
             delay_omni_controller,
-            # Velocity smoothing (after controllers are ready)
-            TimerAction(period=5.0, actions=[velocity_ramp]),
             # Teleop (optional, usually run on PC instead)
-            TimerAction(period=6.0, actions=[joy_node]),
-            TimerAction(period=6.0, actions=[teleop_node]),
+            TimerAction(period=5.0, actions=[joy_node]),
+            TimerAction(period=5.0, actions=[teleop_node]),
         ]
     )

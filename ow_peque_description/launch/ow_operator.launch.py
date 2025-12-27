@@ -58,6 +58,9 @@ def generate_launch_description():
                 [FindPackageShare("ow_peque_description"), "config", "ps5_controller.yaml"]
             ),
         ],
+        remappings=[
+            ("cmd_vel", "/omni_wheel_drive_controller/cmd_vel"),
+        ],
         output="screen",
         condition=IfCondition(enable_teleop),
     )
