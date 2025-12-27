@@ -134,18 +134,19 @@ def generate_launch_description():
             # Arguments
             DeclareLaunchArgument(
                 "enable_teleop",
-                default_value="true",
-                description="Enable joystick teleop (joy + teleop_twist_joy).",
+                default_value="false",
+                description="Enable joystick teleop (usually run on PC instead).",
             ),
             # Core nodes
             robot_state_publisher,
             controller_manager,
-            joint_broadcaster_spawner,
+            # Wait for controller_manager to be ready before spawning controllers
+            TimerAction(period=2.0, actions=[joint_broadcaster_spawner]),
             delay_omni_controller,
-            # Velocity smoothing
-            TimerAction(period=3.0, actions=[velocity_ramp]),
-            # Teleop (optional)
-            TimerAction(period=4.0, actions=[joy_node]),
-            TimerAction(period=4.0, actions=[teleop_node]),
+            # Velocity smoothing (after controllers are ready)
+            TimerAction(period=5.0, actions=[velocity_ramp]),
+            # Teleop (optional, usually run on PC instead)
+            TimerAction(period=6.0, actions=[joy_node]),
+            TimerAction(period=6.0, actions=[teleop_node]),
         ]
     )
