@@ -19,6 +19,11 @@ def generate_launch_description():
     entity_name = LaunchConfiguration("entity_name")
     controller_manager = LaunchConfiguration("controller_manager")
 
+    # RViz config
+    rviz_config_file = PathJoinSubstitution(
+        [FindPackageShare("ow_peque_description"), "rviz", "urdf_config.rviz"]
+    )
+
     robot_description_content = Command(
         [
             FindExecutable(name="xacro"),
@@ -109,6 +114,16 @@ def generate_launch_description():
         output="screen",
     )
 
+    # RViz
+    rviz_node = Node(
+        package="rviz2",
+        executable="rviz2",
+        name="rviz2",
+        output="screen",
+        arguments=["-d", rviz_config_file],
+        parameters=[{"use_sim_time": use_sim_time}],
+    )
+
     return LaunchDescription(
         [
             DeclareLaunchArgument(
@@ -145,6 +160,7 @@ def generate_launch_description():
             velocity_bridge,
             joy_node,
             teleop_node,
+            rviz_node,
             TimerAction(period=2.0, actions=[joint_broadcaster_spawner]),
             TimerAction(period=4.0, actions=[omni_spawner]),
         ]

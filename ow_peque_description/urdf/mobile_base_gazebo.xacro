@@ -43,9 +43,9 @@
                 <specular>0.1 0.1 0.1 1.0</specular>
             </material>
         </visual>
-        <mu1>${coef1}</mu1>
-        <mu2>${coef2}</mu2>
-        <fdir1>${cos(pi/6.0)} ${-sin(pi/6.0)} 0</fdir1>
+        <mu1>${coef1}</mu1> 
+        <mu2>${coef2}</mu2> 
+        <fdir1>1.0 0.0 0.0</fdir1> 
     </gazebo>
 
     <gazebo reference="left_wheel_link">
@@ -58,7 +58,7 @@
         </visual>
         <mu1>${coef1}</mu1>
         <mu2>${coef2}</mu2>
-        <fdir1>${-cos(pi/6.0)} ${-sin(pi/6.0)} 0</fdir1>
+        <fdir1>1.0 0.0 0.0</fdir1> 
     </gazebo>
 
     <gazebo reference="front_wheel_link">
@@ -71,8 +71,8 @@
         </visual>
         <mu1>${coef1}</mu1>
         <mu2>${coef2}</mu2>
-        <fdir1>0 1.0 0</fdir1>
-
+        <fdir1>1.0 0.0 0.0</fdir1>
+        
     </gazebo>
 
 </robot>

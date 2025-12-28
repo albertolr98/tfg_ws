@@ -13,14 +13,14 @@
             <geometry>
                 <mesh filename="file://$(find ow_peque_description)/meshes/PiezasNaranjas.stl" scale="0.001 0.001 0.001"/>
             </geometry>
-            <origin xyz="0 0 ${base_to_ground_height}" rpy="${pi / 2.0} 0 ${-2.0 * pi / 3.0}"/>
+            <origin xyz="0 0 ${base_to_ground_height}" rpy="${pi / 2.0} 0 ${-2.0 * pi / 3.0 - pi / 2.0}"/>
             <material name="orange"/>
         </visual>
         <collision>
             <geometry>
                 <mesh filename="file://$(find ow_peque_description)/meshes/ModeloColision.stl" scale="0.001 0.001 0.001"/>
             </geometry>
-            <origin xyz="0 0 ${base_to_ground_height}" rpy="${pi / 2.0} 0 ${-2.0 * pi / 3.0}"/>
+            <origin xyz="0 0 ${base_to_ground_height}" rpy="${pi / 2.0} 0 ${-2.0 * pi / 3.0 - pi / 2.0}"/>
         </collision>
         <inertial>
             <mass value="5"/>
@@ -41,7 +41,7 @@
             <geometry>
                 <mesh filename="file://$(find ow_peque_description)/meshes/PiezasNegras.stl" scale="0.001 0.001 0.001"/>
             </geometry>
-            <origin xyz="0 0 ${base_to_ground_height}" rpy="${pi / 2.0} 0 ${-2.0 * pi / 3.0}"/>
+            <origin xyz="0 0 ${base_to_ground_height}" rpy="${pi / 2.0} 0 ${-2.0 * pi / 3.0 - pi / 2.0}"/>
             <material name="black"/>
         </visual>
     </link>
@@ -58,7 +58,7 @@
             <geometry>
                 <mesh filename="file://$(find ow_peque_description)/meshes/Placas.stl" scale="0.001 0.001 0.001"/>
             </geometry>
-            <origin xyz="0 0 ${base_to_ground_height}" rpy="${pi / 2.0} 0 ${-2.0 * pi / 3.0}"/>
+            <origin xyz="0 0 ${base_to_ground_height}" rpy="${pi / 2.0} 0 ${-2.0 * pi / 3.0 - pi / 2.0}"/>
             <material name="green"/>
         </visual>
     </link>
@@ -70,19 +70,19 @@
                      prefix="front" 
                      base_radius="${base_radius}"
                      z_offset="${ground_to_shaft_height}"
-                     angle="${pi / 2.0}"/>
+                     angle="${0}"/>
       
     <xacro:omniwheel parent_link="base_link"
                      prefix="left" 
                      base_radius="${base_radius}"
                      z_offset="${ground_to_shaft_height}"
-                     angle="${pi + pi / 6.0}"/>
+                     angle="${pi + pi / 6.0 - pi / 2.0}"/>
 
     <xacro:omniwheel parent_link="base_link"
                      prefix="right"
                      base_radius="${base_radius}"
                      z_offset="${ground_to_shaft_height}"
-                     angle="${- pi / 6.0}"/>
+                     angle="${- pi / 6.0 - pi / 2.0}"/>
     
 
     <!-- Joints -->

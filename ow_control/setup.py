@@ -26,6 +26,7 @@ setup(
         'console_scripts': [
             'linear_ramp = ow_control.linear_ramp:main',
             'joint_state_bridge = ow_control.joint_state_bridge:main',
+            'cmd_vel_relay = ow_control.cmd_vel_relay:main',
         ],
     },
 )

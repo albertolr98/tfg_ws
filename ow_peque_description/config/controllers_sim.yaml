@@ -1,4 +1,7 @@
-controller_manager:
+# Controller configuration for simulation in /sim namespace
+# Used by gz_ros2_control when running with sim_namespace:=/sim
+
+/sim/controller_manager:
   ros__parameters:
     update_rate: 30
 
@@ -9,7 +12,7 @@ controller_manager:
       type: "omni_wheel_drive_controller/OmniWheelDriveController"
 
 
-omni_wheel_drive_controller:
+/sim/omni_wheel_drive_controller:
   ros__parameters:
     wheel_offset: 0.0
     wheel_names:
@@ -29,6 +32,6 @@ omni_wheel_drive_controller:
 
     open_loop: false
     position_feedback: true
-    enable_odom_tf: true
+    enable_odom_tf: false  # Disabled to avoid TF conflicts with real robot
 
     cmd_vel_timeout: 1.0
