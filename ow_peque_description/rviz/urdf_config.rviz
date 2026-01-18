@@ -48,7 +48,7 @@ Visualization Manager:
         Z: 0
       Plane: XY
       Plane Cell Count: 10
-      Reference Frame: base_link
+      Reference Frame: odom
       Value: true
     - Alpha: 1
       Class: rviz_default_plugins/RobotModel
@@ -77,12 +77,22 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        black_parts_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         front_wheel_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
         left_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        placas_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -111,9 +121,15 @@ Visualization Manager:
           Value: true
         base_link:
           Value: true
+        black_parts_link:
+          Value: true
         front_wheel_link:
           Value: true
         left_wheel_link:
+          Value: true
+        odom:
+          Value: true
+        placas_link:
           Value: true
         right_wheel_link:
           Value: true
@@ -125,18 +141,24 @@ Visualization Manager:
       Tree:
         base_footprint:
           base_link:
+            black_parts_link:
+              {}
             front_wheel_link:
               {}
             left_wheel_link:
               {}
+            placas_link:
+              {}
             right_wheel_link:
               {}
+        odom:
+          {}
       Update Interval: 0
       Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: base_footprint
+    Fixed Frame: odom
     Frame Rate: 30
   Name: root
   Tools:
@@ -179,7 +201,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 1.3410618305206299
+      Distance: 2.96466064453125
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -194,10 +216,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7103976607322693
+      Pitch: 0.9303972721099854
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.2503911256790161
+      Yaw: 3.145390272140503
     Saved: ~
 Window Geometry:
   Displays:

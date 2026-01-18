@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Launch file for real robot hardware.
-Runs on: Raspberry Pi
+Archivo de lanzamiento para hardware real.
+Se ejecuta en: Raspberry Pi
 
-This launch file starts all necessary nodes to operate the real ow_peque robot:
-- Robot State Publisher (URDF with sim_mode:=false)
-- Controller Manager with OmnidriveSystemHardware plugin
+Este launch file inicia todos los nodos necesarios para operar el robot ow real:
+- Robot State Publisher (URDF con sim_mode:=false)
+- Controller Manager con plugin OmnidriveSystemHardware
 - Joint State Broadcaster
 - Omni Wheel Drive Controller
-- Optional: Teleop (joy + teleop_twist_joy) - usually run on PC instead
+- Opcional: Teleop (joy + teleop_twist_joy) - normalmente se ejecuta en PC
 """
 from launch import LaunchDescription
 from launch.actions import (
@@ -29,16 +29,16 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-    # Launch arguments
+    # Argumentos de lanzamiento
     enable_teleop = LaunchConfiguration("enable_teleop")
 
-    # Robot description (URDF with real hardware plugin)
+    # Descripción del robot (URDF con plugin de hardware real)
     robot_description_content = Command(
         [
             FindExecutable(name="xacro"),
             " ",
             PathJoinSubstitution(
-                [FindPackageShare("ow_peque_description"), "urdf", "ow.urdf.xacro"]
+                [FindPackageShare("ow_description"), "urdf", "ow.urdf.xacro"]
             ),
             " ",
             "sim_mode:=false",
@@ -46,9 +46,9 @@ def generate_launch_description():
     )
     robot_description = {"robot_description": robot_description_content}
 
-    # Controller configuration
+    # Configuración de controladores
     robot_controllers = PathJoinSubstitution(
-        [FindPackageShare("ow_peque_description"), "config", "controllers.yaml"]
+        [FindPackageShare("ow_description"), "config", "controllers.yaml"]
     )
 
     # Robot State Publisher
@@ -67,7 +67,7 @@ def generate_launch_description():
         output="screen",
     )
 
-    # Joint State Broadcaster spawner
+    # Spawner del Joint State Broadcaster
     joint_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
@@ -75,7 +75,7 @@ def generate_launch_description():
         output="screen",
     )
 
-    # Omni Wheel Drive Controller spawner (starts after joint broadcaster)
+    # Spawner del Omni Wheel Drive Controller (inicia después del joint broadcaster)
     omni_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
@@ -87,7 +87,7 @@ def generate_launch_description():
         output="screen",
     )
 
-    # Delay omni controller until joint broadcaster is ready
+    # Retrasar el controlador omni hasta que el joint broadcaster esté listo
     delay_omni_controller = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_broadcaster_spawner,
@@ -95,7 +95,7 @@ def generate_launch_description():
         )
     )
 
-    # Joy node (optional, for teleop - usually run on PC instead)
+    # Nodo Joy (opcional, para teleop - normalmente se ejecuta en PC)
     joy_node = Node(
         package="joy",
         executable="joy_node",
@@ -103,14 +103,14 @@ def generate_launch_description():
         condition=IfCondition(enable_teleop),
     )
 
-    # Teleop node (optional - usually run on PC instead)
+    # Nodo Teleop (opcional - normalmente se ejecuta en PC)
     teleop_node = Node(
         package="teleop_twist_joy",
         executable="teleop_node",
         name="teleop_twist_joy_node",
         parameters=[
             PathJoinSubstitution(
-                [FindPackageShare("ow_peque_description"), "config", "ps5_controller.yaml"]
+                [FindPackageShare("ow_description"), "config", "ps5_controller.yaml"]
             ),
         ],
         remappings=[
@@ -122,19 +122,19 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            # Arguments
+            # Argumentos
             DeclareLaunchArgument(
                 "enable_teleop",
                 default_value="false",
-                description="Enable joystick teleop (usually run on PC instead).",
+                description="Habilitar teleop con joystick (normalmente se ejecuta en PC).",
             ),
-            # Core nodes
+            # Nodos principales
             robot_state_publisher,
             controller_manager,
-            # Wait for controller_manager to be ready before spawning controllers
+            # Esperar a que controller_manager esté listo antes de lanzar controladores
             TimerAction(period=2.0, actions=[joint_broadcaster_spawner]),
             delay_omni_controller,
-            # Teleop (optional, usually run on PC instead)
+            # Teleop (opcional, normalmente se ejecuta en PC)
             TimerAction(period=5.0, actions=[joy_node]),
             TimerAction(period=5.0, actions=[teleop_node]),
         ]

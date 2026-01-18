@@ -1,4 +1,15 @@
 #!/usr/bin/env python3
+"""
+Archivo de lanzamiento para simulación del robot ow.
+Se ejecuta en: PC
+
+Este launch file inicia la simulación en Gazebo con integración completa de ros2_control:
+- Simulador Gazebo Harmonic
+- Robot State Publisher
+- Controladores (joint_broad, omni_wheel_drive_controller)
+- Teleop (joy + teleop_twist_joy)
+- Visualización RViz2
+"""
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -19,11 +30,12 @@ def generate_launch_description():
     entity_name = LaunchConfiguration("entity_name")
     controller_manager = LaunchConfiguration("controller_manager")
 
-    # RViz config
+    # Configuración de RViz
     rviz_config_file = PathJoinSubstitution(
         [FindPackageShare("ow_description"), "rviz", "urdf_config.rviz"]
     )
 
+    # Descripción del robot
     robot_description_content = Command(
         [
             FindExecutable(name="xacro"),
@@ -36,6 +48,7 @@ def generate_launch_description():
         ]
     )
 
+    # Robot State Publisher
     robot_state_publisher = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
@@ -46,6 +59,7 @@ def generate_launch_description():
         output="screen",
     )
 
+    # Simulador Gazebo
     gz_sim = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution(
@@ -55,6 +69,7 @@ def generate_launch_description():
         launch_arguments={"gz_args": [gz_args, " ", world]}.items(),
     )
 
+    # Spawn del robot en Gazebo
     spawn_entity = Node(
         package="ros_gz_sim",
         executable="create",
@@ -62,6 +77,7 @@ def generate_launch_description():
         output="screen",
     )
 
+    # Bridge del reloj de simulación
     clock_bridge = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge",
@@ -69,6 +85,7 @@ def generate_launch_description():
         output="screen",
     )
 
+    # Spawner del Joint State Broadcaster
     joint_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
@@ -76,6 +93,7 @@ def generate_launch_description():
         output="screen",
     )
 
+    # Spawner del Omni Wheel Drive Controller
     omni_spawner = Node(
         package="controller_manager",
         executable="spawner",
@@ -83,6 +101,7 @@ def generate_launch_description():
         output="screen",
     )
 
+    # Nodo de rampa de velocidad (suaviza comandos)
     velocity_bridge = Node(
         package="ow_control",
         executable="linear_ramp",
@@ -94,6 +113,7 @@ def generate_launch_description():
         ],
     )
 
+    # Nodo Joy para joystick
     joy_node = Node(
         package="joy",
         executable="joy_node",
@@ -101,6 +121,7 @@ def generate_launch_description():
         output="screen",
     )
 
+    # Nodo Teleop
     teleop_node = Node(
         package="teleop_twist_joy",
         executable="teleop_node",
@@ -129,29 +150,29 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "use_sim_time",
                 default_value="true",
-                description="Use simulation time if true.",
+                description="Usar tiempo de simulación.",
             ),
             DeclareLaunchArgument(
                 "gz_args",
                 default_value="-r -v 4",
-                description="Arguments passed to gz sim (default unpauses the sim).",
+                description="Argumentos para gz sim (por defecto despausa la simulación).",
             ),
             DeclareLaunchArgument(
                 "world",
                 default_value=PathJoinSubstitution(
                     [FindPackageShare("ow_description"), "worlds", "empty.sdf"]
                 ),
-                description="Path to the SDF world file loaded by gz sim.",
+                description="Ruta al archivo SDF del mundo.",
             ),
             DeclareLaunchArgument(
                 "entity_name",
                 default_value="ow",
-                description="Name to give the spawned Gazebo entity.",
+                description="Nombre de la entidad en Gazebo.",
             ),
             DeclareLaunchArgument(
                 "controller_manager",
                 default_value="/controller_manager",
-                description="Controller manager namespace.",
+                description="Namespace del controller manager.",
             ),
             gz_sim,
             clock_bridge,
