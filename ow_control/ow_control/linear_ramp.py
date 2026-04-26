@@ -8,7 +8,7 @@ class LinearRampNode(Node):
         super().__init__('linear_ramp_node')
         
         # Parámetros (puedes hacerlos configurables después)
-        self.ramp_time = 1.0  # Segundos para llegar a la meta
+        self.ramp_time = 0.5  # Segundos para llegar a la meta (igual que kRampTimeSeconds en tmc_driver)
         self.frequency = 20.0 # Hz
         self.step_period = 1.0 / self.frequency
         

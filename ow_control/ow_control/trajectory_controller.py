@@ -87,6 +87,7 @@ class TrajectoryControllerNode(Node):
         self.circle_distance = 0.0
         self.last_x = 0.0
         self.last_y = 0.0
+        self.waypoints = []
 
         self.current_x = 0.0
         self.current_y = 0.0
@@ -194,7 +195,47 @@ class TrajectoryControllerNode(Node):
             TrajectoryType.X_PATTERN: 'X',
         }
         self.get_logger().info(f'Iniciando trayectoria: {names[traj_type]}')
+        self._generate_waypoints(traj_type)
         self._start_segment()
+
+    def _generate_waypoints(self, traj_type: TrajectoryType):
+        """Genera los waypoints absolutos para la trayectoria seleccionada."""
+        self.waypoints = []
+        x, y = self.current_x, self.current_y
+
+        if traj_type == TrajectoryType.SQUARE:
+            # Cuadrado: +X, +Y, -X, -Y
+            self.waypoints = [
+                (x + self.side_length, y),
+                (x + self.side_length, y + self.side_length),
+                (x, y + self.side_length),
+                (x, y)
+            ]
+        elif traj_type == TrajectoryType.TRIANGLE:
+            # Triángulo equilátero con base horizontal desplazada
+            h = self.side_length * math.sqrt(3) / 2
+            self.waypoints = [
+                (x, y + self.side_length),
+                (x + h, y + self.side_length / 2),
+                (x, y)
+            ]
+        elif traj_type == TrajectoryType.X_PATTERN:
+            # Lazo en X
+            self.waypoints = [
+                (x + self.side_length, y - self.side_length),
+                (x, y - self.side_length),
+                (x + self.side_length, y),
+                (x, y)
+            ]
+        elif traj_type == TrajectoryType.CIRCLE:
+            # Círculo: generamos N puntos para mayor precisión
+            num_points = 36
+            cx, cy = x, y + self.circle_radius
+            for i in range(1, num_points + 1):
+                angle = -math.pi/2 + (2 * math.pi * i / num_points)
+                px = cx + self.circle_radius * math.cos(angle)
+                py = cy + self.circle_radius * math.sin(angle)
+                self.waypoints.append((px, py))
 
     def _cancel_trajectory(self):
         """Cancela la trayectoria actual."""
@@ -240,6 +281,26 @@ class TrajectoryControllerNode(Node):
         """Detiene el robot."""
         self._publish_velocity()
 
+    def _get_velocity_to_target(self, tx: float, ty: float) -> tuple[float, float, bool]:
+        """Calcula velocidades para ir a un objetivo y retorna si ha llegado."""
+        dx = tx - self.current_x
+        dy = ty - self.current_y
+        dist = math.sqrt(dx * dx + dy * dy)
+
+        if dist < self.position_tolerance:
+            return 0.0, 0.0, True
+
+        # Velocidad constante en dirección al objetivo
+        # En la aproximación final (últimos 5cm), reducimos un poco para evitar sobreoscilación
+        current_vel = self.velocity
+        if dist < 0.05:
+            current_vel = max(0.05, self.velocity * (dist / 0.05))
+
+        vx = (dx / dist) * current_vel
+        vy = (dy / dist) * current_vel
+        
+        return vx, vy, False
+
     def _control_loop(self):
         """Bucle de control principal."""
         if not self.deadman_pressed:
@@ -269,86 +330,83 @@ class TrajectoryControllerNode(Node):
         trajectory_handlers.get(self.trajectory_type, lambda: None)()
 
     def _execute_square(self):
-        """Ejecuta trayectoria cuadrada."""
-        directions = [(1, 0), (0, 1), (-1, 0), (0, -1)]
-        
-        if self._get_distance_traveled() >= self.side_length - self.position_tolerance:
+        """Ejecuta trayectoria cuadrada basada en waypoints."""
+        if self.segment_index >= len(self.waypoints):
+            self.get_logger().info('¡Cuadrado completado!')
+            self._cancel_trajectory()
+            return
+
+        target = self.waypoints[self.segment_index]
+        vx, vy, arrived = self._get_velocity_to_target(target[0], target[1])
+
+        if arrived:
             self.segment_index += 1
-            if self.segment_index >= 4:
+            if self.segment_index >= len(self.waypoints):
                 self.get_logger().info('¡Cuadrado completado!')
                 self._cancel_trajectory()
-                return
-            self._start_pause()
+            else:
+                self._start_pause()
         else:
-            d = directions[self.segment_index]
-            self._publish_velocity(d[0] * self.velocity, d[1] * self.velocity)
+            self._publish_velocity(vx, vy)
 
     def _execute_circle(self):
-        """Ejecuta trayectoria circular omnidireccional (sin rotación)."""
-        circumference = 2 * math.pi * self.circle_radius
-        
-        dx = self.current_x - self.last_x
-        dy = self.current_y - self.last_y
-        self.circle_distance += math.sqrt(dx * dx + dy * dy)
-        self.last_x = self.current_x
-        self.last_y = self.current_y
-        
-        if self.circle_distance >= circumference:
+        """Ejecuta trayectoria circular basada en waypoints."""
+        if self.segment_index >= len(self.waypoints):
             self.get_logger().info('¡Círculo completado!')
             self._cancel_trajectory()
             return
-        
-        angle = self.circle_distance / self.circle_radius
-        vx = self.velocity * math.cos(angle + math.pi/2)
-        vy = self.velocity * math.sin(angle + math.pi/2)
-        self._publish_velocity(vx, vy, 0.0)
+
+        target = self.waypoints[self.segment_index]
+        vx, vy, arrived = self._get_velocity_to_target(target[0], target[1])
+
+        if arrived:
+            self.segment_index += 1
+            # Para el círculo no hacemos pausas entre puntos para suavidad
+            if self.segment_index >= len(self.waypoints):
+                self.get_logger().info('¡Círculo completado!')
+                self._cancel_trajectory()
+        else:
+            self._publish_velocity(vx, vy)
 
     def _execute_triangle(self):
-        """Ejecuta trayectoria triangular equilátera con base horizontal."""
-        directions = [
-            (0, 1),
-            (math.sqrt(3)/2, -0.5),
-            (-math.sqrt(3)/2, -0.5),
-        ]
-        
-        if self._get_distance_traveled() >= self.side_length - self.position_tolerance:
+        """Ejecuta trayectoria triangular basada en waypoints."""
+        if self.segment_index >= len(self.waypoints):
+            self.get_logger().info('¡Triángulo completado!')
+            self._cancel_trajectory()
+            return
+
+        target = self.waypoints[self.segment_index]
+        vx, vy, arrived = self._get_velocity_to_target(target[0], target[1])
+
+        if arrived:
             self.segment_index += 1
-            if self.segment_index >= 3:
+            if self.segment_index >= len(self.waypoints):
                 self.get_logger().info('¡Triángulo completado!')
                 self._cancel_trajectory()
-                return
-            self._start_pause()
+            else:
+                self._start_pause()
         else:
-            d = directions[self.segment_index]
-            self._publish_velocity(d[0] * self.velocity, d[1] * self.velocity)
+            self._publish_velocity(vx, vy)
 
     def _execute_x_pattern(self):
-        """Ejecuta trayectoria en forma de X (lazo cerrado)."""
-        diag_length = self.side_length * math.sqrt(2)
-        segments = [
-            ((1, -1), diag_length),
-            ((-1, 0), self.side_length),
-            ((1, 1), diag_length),
-            ((-1, 0), self.side_length),
-        ]
-        
-        if self.segment_index >= len(segments):
+        """Ejecuta trayectoria en forma de X basada en waypoints."""
+        if self.segment_index >= len(self.waypoints):
             self.get_logger().info('¡X completada!')
             self._cancel_trajectory()
             return
-        
-        direction, target_distance = segments[self.segment_index]
-        
-        if self._get_distance_traveled() >= target_distance - self.position_tolerance:
+
+        target = self.waypoints[self.segment_index]
+        vx, vy, arrived = self._get_velocity_to_target(target[0], target[1])
+
+        if arrived:
             self.segment_index += 1
-            if self.segment_index >= len(segments):
+            if self.segment_index >= len(self.waypoints):
                 self.get_logger().info('¡X completada!')
                 self._cancel_trajectory()
-                return
-            self._start_pause()
+            else:
+                self._start_pause()
         else:
-            norm = math.sqrt(direction[0]**2 + direction[1]**2)
-            self._publish_velocity(direction[0]/norm * self.velocity, direction[1]/norm * self.velocity)
+            self._publish_velocity(vx, vy)
 
 
 def main(args=None):
