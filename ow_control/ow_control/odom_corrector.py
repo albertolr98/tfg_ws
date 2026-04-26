@@ -14,7 +14,7 @@ class OdomCorrectorNode(Node):
         # Factor que corrige el sobreconteo del encoder durante la rotación.
         # Se mide como: ángulo_físico / ángulo_reportado_por_odom_bruta
         # Ejemplo: robot gira 360° físicamente, odom_bruta reporta 372.86° → factor = 360/372.86
-        self.declare_parameter("rotation_slip_factor", 1)
+        self.declare_parameter("rotation_slip_factor", 1.0)
         self.declare_parameter("input_topic", "/omni_wheel_drive_controller/odom")
         self.declare_parameter("output_topic", "/odom")
         self.declare_parameter("publish_tf", True)
