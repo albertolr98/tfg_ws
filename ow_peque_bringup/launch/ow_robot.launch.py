@@ -103,6 +103,24 @@ def generate_launch_description():
         )
     )
 
+    # Corrector de odometría: compensa el roller slip en rotación
+    odom_corrector = Node(
+        package="ow_control",
+        executable="odom_corrector",
+        parameters=[{
+            "rotation_slip_factor": 360.0 / 372.86,  # medido: físico=360°, odom_bruta=372.86°
+            "publish_tf": True,
+        }],
+        output="screen",
+    )
+
+    delay_odom_corrector = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=omni_controller_spawner,
+            on_exit=[odom_corrector],
+        )
+    )
+
     # Nodo Joy (opcional, para teleop - normalmente se ejecuta en PC)
     joy_node = Node(
         package="joy",
@@ -141,6 +159,7 @@ def generate_launch_description():
             controller_manager,
             delay_joint_broadcaster,
             delay_omni_controller,
+            delay_odom_corrector,
             # Teleop (opcional, normalmente se ejecuta en PC)
             TimerAction(period=5.0, actions=[joy_node]),
             TimerAction(period=5.0, actions=[teleop_node]),

@@ -27,6 +27,7 @@ setup(
             'linear_ramp = ow_control.linear_ramp:main',
             'cmd_vel_relay = ow_control.cmd_vel_relay:main',
             'trajectory_controller = ow_control.trajectory_controller:main',
+            'odom_corrector = ow_control.odom_corrector:main',
         ],
     },
 )
