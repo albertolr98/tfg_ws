@@ -19,7 +19,7 @@ omni_wheel_drive_controller:
         "base_right_wheel_joint"
       ]
 
-    robot_radius: 0.0934
+    robot_radius: 0.0821
     wheel_radius: 0.029
 
     odom_frame_id: odom
