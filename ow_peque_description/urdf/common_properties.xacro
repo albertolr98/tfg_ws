@@ -5,7 +5,7 @@
     <xacro:property name="base_plate_height" value="0.018"/>
     <xacro:property name="base_to_ground_height" value="0.02"/>
     <xacro:property name="ground_to_shaft_height" value="0.03"/>
-    <xacro:property name="omniwheel_radius" value="0.0294"/>
+    <xacro:property name="omniwheel_radius" value="0.0288"/>
     <xacro:property name="base_radius" value="0.0934"/>
 
     <!-- Simulación -->

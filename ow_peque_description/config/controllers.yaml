@@ -20,7 +20,7 @@ omni_wheel_drive_controller:
       ]
 
     robot_radius: 0.0934
-    wheel_radius: 0.0294
+    wheel_radius: 0.0288
 
     odom_frame_id: odom
     base_frame_id: base_footprint
