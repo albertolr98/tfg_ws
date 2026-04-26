@@ -15,11 +15,15 @@ class OdomCorrectorNode(Node):
         # Se mide como: ángulo_físico / ángulo_reportado_por_odom_bruta
         # Ejemplo: robot gira 360° físicamente, odom_bruta reporta 372.86° → factor = 360/372.86
         self.declare_parameter("rotation_slip_factor", 1.0)
+        self.declare_parameter("linear_x_factor", 1.0)
+        self.declare_parameter("linear_y_factor", 0.98)
         self.declare_parameter("input_topic", "/omni_wheel_drive_controller/odom")
         self.declare_parameter("output_topic", "/odom")
         self.declare_parameter("publish_tf", True)
 
-        self._factor = self.get_parameter("rotation_slip_factor").value
+        self._factor_w = self.get_parameter("rotation_slip_factor").value
+        self._factor_x = self.get_parameter("linear_x_factor").value
+        self._factor_y = self.get_parameter("linear_y_factor").value
         self._x = 0.0
         self._y = 0.0
         self._theta = 0.0
@@ -55,10 +59,10 @@ class OdomCorrectorNode(Node):
         if dt <= 0.0:
             return
 
-        # Velocidades en el frame del robot; se corrige solo la angular
-        vx = msg.twist.twist.linear.x
-        vy = msg.twist.twist.linear.y
-        omega = msg.twist.twist.angular.z * self._factor
+        # Velocidades en el frame del robot
+        vx = msg.twist.twist.linear.x * self._factor_x
+        vy = msg.twist.twist.linear.y * self._factor_y
+        omega = msg.twist.twist.angular.z * self._factor_w
 
         # Integración exacta por arco (igual que el controlador original)
         dx = vx * dt
