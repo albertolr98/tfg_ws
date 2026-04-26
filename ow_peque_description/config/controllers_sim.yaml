@@ -22,7 +22,7 @@
         "base_right_wheel_joint"
       ]
 
-    robot_radius: 0.083
+    robot_radius: 0.095
     wheel_radius: 0.029
 
     odom_frame_id: sim_odom
