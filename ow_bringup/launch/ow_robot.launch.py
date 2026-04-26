@@ -17,7 +17,7 @@ from launch.actions import (
     TimerAction,
 )
 from launch.conditions import IfCondition
-from launch.event_handlers import OnProcessExit
+from launch.event_handlers import OnProcessExit, OnProcessStart
 from launch.substitutions import (
     Command,
     FindExecutable,
@@ -87,7 +87,15 @@ def generate_launch_description():
         output="screen",
     )
 
-    # Retrasar el controlador omni hasta que el joint broadcaster esté listo
+    # Lanzar joint broadcaster en cuanto arranca el controller manager
+    delay_joint_broadcaster = RegisterEventHandler(
+        event_handler=OnProcessStart(
+            target_action=controller_manager,
+            on_start=[joint_broadcaster_spawner],
+        )
+    )
+
+    # Lanzar omni controller cuando el joint broadcaster termina su spawn
     delay_omni_controller = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_broadcaster_spawner,

@@ -11,7 +11,8 @@ Este launch file inicia la simulación en Gazebo con integración completa de ro
 - Visualización RViz2
 """
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, RegisterEventHandler, SetEnvironmentVariable
+from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import (
     Command,
@@ -33,6 +34,18 @@ def generate_launch_description():
     # Configuración de RViz
     rviz_config_file = PathJoinSubstitution(
         [FindPackageShare("ow_peque_description"), "rviz", "urdf_config.rviz"]
+    )
+
+    # Añadir el directorio de mundos al path de recursos de Gazebo
+    # Esto es necesario para que Gazebo encuentre el modelo del laberinto
+    # usando el URI model://maze_model_rs
+    world_path = PathJoinSubstitution(
+        [FindPackageShare("ow_peque_description"), "worlds"]
+    )
+    
+    gz_resource_path = SetEnvironmentVariable(
+        name="GZ_SIM_RESOURCE_PATH",
+        value=[world_path]
     )
 
     # Descripción del robot
@@ -101,6 +114,14 @@ def generate_launch_description():
         output="screen",
     )
 
+    # Lanzar omni controller cuando el joint broadcaster termina su spawn
+    delay_omni_spawner = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=joint_broadcaster_spawner,
+            on_exit=[omni_spawner],
+        )
+    )
+
     # Nodo de rampa de velocidad (suaviza comandos)
     velocity_bridge = Node(
         package="ow_control",
@@ -121,19 +142,37 @@ def generate_launch_description():
         output="screen",
     )
 
-    # Nodo Teleop
-    teleop_node = Node(
-        package="teleop_twist_joy",
-        executable="teleop_node",
-        name="teleop_twist_joy_node",
+    # Nodo de control de trayectorias (reemplaza a teleop genérico)
+    trajectory_controller_node = Node(
+        package="ow_control",
+        executable="trajectory_controller",
+        name="trajectory_controller",
         parameters=[
-            PathJoinSubstitution(
-                [FindPackageShare("ow_peque_description"), "config", "ps5_controller.yaml"]
-            ),
             {"use_sim_time": use_sim_time},
+            {"velocity": 0.2},
+            {"side_length": 0.8},
+            {"circle_radius": 0.4},
         ],
         output="screen",
+        # Remapeamos la salida para que pase por la rampa (velocity_bridge)
+        remappings=[
+            ("/omni_wheel_drive_controller/cmd_vel", "/cmd_vel"),
+        ],
     )
+
+    # Nodo Teleop (Desactivado en favor de trajectory_controller)
+    # teleop_node = Node(
+    #     package="teleop_twist_joy",
+    #     executable="teleop_node",
+    #     name="teleop_twist_joy_node",
+    #     parameters=[
+    #         PathJoinSubstitution(
+    #             [FindPackageShare("ow_peque_description"), "config", "ps5_controller.yaml"]
+    #         ),
+    #         {"use_sim_time": use_sim_time},
+    #     ],
+    #     output="screen",
+    # )
 
     # RViz
     rviz_node = Node(
@@ -160,7 +199,7 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "world",
                 default_value=PathJoinSubstitution(
-                    [FindPackageShare("ow_peque_description"), "worlds", "empty.sdf"]
+                    [FindPackageShare("ow_peque_description"), "worlds", "maze.sdf"]
                 ),
                 description="Ruta al archivo SDF del mundo.",
             ),
@@ -174,15 +213,16 @@ def generate_launch_description():
                 default_value="/controller_manager",
                 description="Namespace del controller manager.",
             ),
+            gz_resource_path,
             gz_sim,
             clock_bridge,
             robot_state_publisher,
             spawn_entity,
             velocity_bridge,
             joy_node,
-            teleop_node,
+            trajectory_controller_node,
             rviz_node,
-            TimerAction(period=2.0, actions=[joint_broadcaster_spawner]),
-            TimerAction(period=4.0, actions=[omni_spawner]),
+            joint_broadcaster_spawner,
+            delay_omni_spawner,
         ]
     )
