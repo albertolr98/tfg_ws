@@ -9,17 +9,17 @@ from tf2_ros import TransformBroadcaster
 
 class OdomCorrectorNode(Node):
     def __init__(self):
-        super().__init__('odom_corrector')
+        super().__init__("odom_corrector")
 
         # Factor que corrige el sobreconteo del encoder durante la rotación.
         # Se mide como: ángulo_físico / ángulo_reportado_por_odom_bruta
         # Ejemplo: robot gira 360° físicamente, odom_bruta reporta 372.86° → factor = 360/372.86
-        self.declare_parameter('rotation_slip_factor', 0.9655)
-        self.declare_parameter('input_topic', '/omni_wheel_drive_controller/odometry')
-        self.declare_parameter('output_topic', '/odom')
-        self.declare_parameter('publish_tf', True)
+        self.declare_parameter("rotation_slip_factor", 1)
+        self.declare_parameter("input_topic", "/omni_wheel_drive_controller/odom")
+        self.declare_parameter("output_topic", "/odom")
+        self.declare_parameter("publish_tf", True)
 
-        self._factor = self.get_parameter('rotation_slip_factor').value
+        self._factor = self.get_parameter("rotation_slip_factor").value
         self._x = 0.0
         self._y = 0.0
         self._theta = 0.0
@@ -27,17 +27,17 @@ class OdomCorrectorNode(Node):
 
         self._sub = self.create_subscription(
             Odometry,
-            self.get_parameter('input_topic').value,
+            self.get_parameter("input_topic").value,
             self._odom_cb,
             10,
         )
         self._pub = self.create_publisher(
             Odometry,
-            self.get_parameter('output_topic').value,
+            self.get_parameter("output_topic").value,
             10,
         )
 
-        if self.get_parameter('publish_tf').value:
+        if self.get_parameter("publish_tf").value:
             self._tf_broadcaster = TransformBroadcaster(self)
         else:
             self._tf_broadcaster = None
@@ -60,12 +60,22 @@ class OdomCorrectorNode(Node):
         vy = msg.twist.twist.linear.y
         omega = msg.twist.twist.angular.z * self._factor
 
-        # Integración por punto medio para minimizar error en trayectorias curvas
+        # Integración exacta por arco (igual que el controlador original)
+        dx = vx * dt
+        dy = vy * dt
         dtheta = omega * dt
-        theta_mid = self._theta + dtheta * 0.5
-        self._x += (vx * math.cos(theta_mid) - vy * math.sin(theta_mid)) * dt
-        self._y += (vx * math.sin(theta_mid) + vy * math.cos(theta_mid)) * dt
+        theta_old = self._theta
         self._theta += dtheta
+        if abs(dtheta) < 1e-6:
+            self._x += dx * math.cos(theta_old) - dy * math.sin(theta_old)
+            self._y += dx * math.sin(theta_old) + dy * math.cos(theta_old)
+        else:
+            self._x += (dx / dtheta) * (math.sin(self._theta) - math.sin(theta_old)) + (
+                dy / dtheta
+            ) * (math.cos(self._theta) - math.cos(theta_old))
+            self._y += -(dx / dtheta) * (
+                math.cos(self._theta) - math.cos(theta_old)
+            ) + (dy / dtheta) * (math.sin(self._theta) - math.sin(theta_old))
 
         qz = math.sin(self._theta / 2.0)
         qw = math.cos(self._theta / 2.0)
@@ -106,4 +116,5 @@ def main(args=None):
         pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
