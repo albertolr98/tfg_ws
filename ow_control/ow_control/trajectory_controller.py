@@ -71,6 +71,9 @@ class TrajectoryControllerNode(Node):
         self.declare_parameter("max_angular_velocity", 3.0)
         self.declare_parameter("pause_time", 1.0)
         self.declare_parameter("position_tolerance", 0.02)
+        self.declare_parameter("arrival_hysteresis", 0.04)
+        self.declare_parameter("min_velocity", 0.03)
+        self.declare_parameter("k_pos", 1.2)
 
         self.side_length = self.get_parameter("side_length").value
         self.circle_radius = self.get_parameter("circle_radius").value
@@ -79,6 +82,9 @@ class TrajectoryControllerNode(Node):
         self.max_angular_vel = self.get_parameter("max_angular_velocity").value
         self.pause_time = self.get_parameter("pause_time").value
         self.position_tolerance = self.get_parameter("position_tolerance").value
+        self.arrival_hysteresis = self.get_parameter("arrival_hysteresis").value
+        self.min_velocity = self.get_parameter("min_velocity").value
+        self.k_pos = self.get_parameter("k_pos").value
 
     def _init_state(self):
         """Inicializa las variables de estado."""
@@ -92,6 +98,7 @@ class TrajectoryControllerNode(Node):
         self.last_x = 0.0
         self.last_y = 0.0
         self.waypoints = []
+        self.current_arrival_tolerance = self.position_tolerance
 
         self.current_x = 0.0
         self.current_y = 0.0
@@ -220,6 +227,7 @@ class TrajectoryControllerNode(Node):
         }
         self.get_logger().info(f"Iniciando trayectoria: {names[traj_type]}")
         self._generate_waypoints(traj_type)
+        self.current_arrival_tolerance = self.position_tolerance
         self._start_segment()
 
     def _generate_waypoints(self, traj_type: TrajectoryType):
@@ -279,12 +287,6 @@ class TrajectoryControllerNode(Node):
         self.pause_start_time = self.get_clock().now()
         self._stop_robot()
 
-    def _get_distance_traveled(self) -> float:
-        """Calcula la distancia recorrida desde el inicio del segmento."""
-        dx = self.current_x - self.start_x
-        dy = self.current_y - self.start_y
-        return math.sqrt(dx * dx + dy * dy)
-
     def _get_pause_elapsed(self) -> float:
         """Retorna el tiempo transcurrido en pausa."""
         if self.pause_start_time is None:
@@ -313,12 +315,10 @@ class TrajectoryControllerNode(Node):
         dy = ty - self.current_y
         dist = math.sqrt(dx * dx + dy * dy)
 
-        if dist < self.position_tolerance:
+        if dist < self.current_arrival_tolerance:
             return 0.0, 0.0, True
 
-        current_vel = self.velocity
-        if dist < 0.05:
-            current_vel = max(0.05, self.velocity * (dist / 0.05))
+        current_vel = min(self.velocity, max(self.min_velocity, self.k_pos * dist))
 
         # Velocidad en frame mundo
         vx_world = (dx / dist) * current_vel
@@ -331,6 +331,44 @@ class TrajectoryControllerNode(Node):
         vy_body = -vx_world * sin_yaw + vy_world * cos_yaw
 
         return vx_body, vy_body, False
+
+    def _get_trajectory_name(self) -> str:
+        names = {
+            TrajectoryType.SQUARE: "Cuadrado",
+            TrajectoryType.CIRCLE: "Círculo",
+            TrajectoryType.TRIANGLE: "Triángulo",
+            TrajectoryType.X_PATTERN: "X",
+        }
+        return names.get(self.trajectory_type, "Trayectoria")
+
+    def _should_pause_between_waypoints(self) -> bool:
+        return self.trajectory_type != TrajectoryType.CIRCLE
+
+    def _execute_current_trajectory(self):
+        """Ejecutor genérico de trayectorias por waypoints."""
+        if self.segment_index >= len(self.waypoints):
+            self.get_logger().info(f"¡{self._get_trajectory_name()} completado!")
+            self._cancel_trajectory()
+            return
+
+        target_x, target_y = self.waypoints[self.segment_index]
+        vx, vy, arrived = self._get_velocity_to_target(target_x, target_y)
+        if not arrived:
+            self._publish_velocity(vx, vy)
+            return
+
+        self.segment_index += 1
+        # Histeresis: ampliamos tolerancia al aceptar un waypoint para evitar
+        # reenganche/oscilación por ruido de odometría.
+        self.current_arrival_tolerance = self.arrival_hysteresis
+
+        if self.segment_index >= len(self.waypoints):
+            self.get_logger().info(f"¡{self._get_trajectory_name()} completado!")
+            self._cancel_trajectory()
+            return
+
+        if self._should_pause_between_waypoints():
+            self._start_pause()
 
     def _control_loop(self):
         """Bucle de control principal."""
@@ -352,92 +390,8 @@ class TrajectoryControllerNode(Node):
                 self._start_segment()
             return
 
-        trajectory_handlers = {
-            TrajectoryType.SQUARE: self._execute_square,
-            TrajectoryType.CIRCLE: self._execute_circle,
-            TrajectoryType.TRIANGLE: self._execute_triangle,
-            TrajectoryType.X_PATTERN: self._execute_x_pattern,
-        }
-        trajectory_handlers.get(self.trajectory_type, lambda: None)()
-
-    def _execute_square(self):
-        """Ejecuta trayectoria cuadrada basada en waypoints."""
-        if self.segment_index >= len(self.waypoints):
-            self.get_logger().info("¡Cuadrado completado!")
-            self._cancel_trajectory()
-            return
-
-        target = self.waypoints[self.segment_index]
-        vx, vy, arrived = self._get_velocity_to_target(target[0], target[1])
-
-        if arrived:
-            self.segment_index += 1
-            if self.segment_index >= len(self.waypoints):
-                self.get_logger().info("¡Cuadrado completado!")
-                self._cancel_trajectory()
-            else:
-                self._start_pause()
-        else:
-            self._publish_velocity(vx, vy)
-
-    def _execute_circle(self):
-        """Ejecuta trayectoria circular basada en waypoints."""
-        if self.segment_index >= len(self.waypoints):
-            self.get_logger().info("¡Círculo completado!")
-            self._cancel_trajectory()
-            return
-
-        target = self.waypoints[self.segment_index]
-        vx, vy, arrived = self._get_velocity_to_target(target[0], target[1])
-
-        if arrived:
-            self.segment_index += 1
-            # Para el círculo no hacemos pausas entre puntos para suavidad
-            if self.segment_index >= len(self.waypoints):
-                self.get_logger().info("¡Círculo completado!")
-                self._cancel_trajectory()
-        else:
-            self._publish_velocity(vx, vy)
-
-    def _execute_triangle(self):
-        """Ejecuta trayectoria triangular basada en waypoints."""
-        if self.segment_index >= len(self.waypoints):
-            self.get_logger().info("¡Triángulo completado!")
-            self._cancel_trajectory()
-            return
-
-        target = self.waypoints[self.segment_index]
-        vx, vy, arrived = self._get_velocity_to_target(target[0], target[1])
-
-        if arrived:
-            self.segment_index += 1
-            if self.segment_index >= len(self.waypoints):
-                self.get_logger().info("¡Triángulo completado!")
-                self._cancel_trajectory()
-            else:
-                self._start_pause()
-        else:
-            self._publish_velocity(vx, vy)
-
-    def _execute_x_pattern(self):
-        """Ejecuta trayectoria en forma de X basada en waypoints."""
-        if self.segment_index >= len(self.waypoints):
-            self.get_logger().info("¡X completada!")
-            self._cancel_trajectory()
-            return
-
-        target = self.waypoints[self.segment_index]
-        vx, vy, arrived = self._get_velocity_to_target(target[0], target[1])
-
-        if arrived:
-            self.segment_index += 1
-            if self.segment_index >= len(self.waypoints):
-                self.get_logger().info("¡X completada!")
-                self._cancel_trajectory()
-            else:
-                self._start_pause()
-        else:
-            self._publish_velocity(vx, vy)
+        self.current_arrival_tolerance = self.position_tolerance
+        self._execute_current_trajectory()
 
 
 def main(args=None):
