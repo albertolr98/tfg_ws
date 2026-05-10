@@ -1,3 +1,7 @@
 controller_manager:
   ros__parameters:
     use_sim_time: true
+
+omni_wheel_drive_controller:
+  ros__parameters:
+    enable_odom_tf: true

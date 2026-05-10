@@ -10,8 +10,14 @@ Este launch file inicia la simulación en Gazebo con integración completa de ro
 - Teleop (joy + teleop_twist_joy)
 - Visualización RViz2
 """
+
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, RegisterEventHandler, SetEnvironmentVariable
+from launch.actions import (
+    DeclareLaunchArgument,
+    IncludeLaunchDescription,
+    RegisterEventHandler,
+    SetEnvironmentVariable,
+)
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import (
@@ -42,10 +48,9 @@ def generate_launch_description():
     world_path = PathJoinSubstitution(
         [FindPackageShare("ow_peque_description"), "worlds"]
     )
-    
+
     gz_resource_path = SetEnvironmentVariable(
-        name="GZ_SIM_RESOURCE_PATH",
-        value=[world_path]
+        name="GZ_SIM_RESOURCE_PATH", value=[world_path]
     )
 
     # Descripción del robot
@@ -110,7 +115,13 @@ def generate_launch_description():
     omni_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["omni_wheel_drive_controller", "--controller-manager", controller_manager],
+        arguments=[
+            "omni_wheel_drive_controller",
+            "--controller-manager",
+            controller_manager,
+            "--controller-ros-args",
+            "-r ~/odom:=/odom",
+        ],
         output="screen",
     )
 
@@ -154,9 +165,9 @@ def generate_launch_description():
             {"circle_radius": 0.4},
         ],
         output="screen",
-        # Remapeamos la salida para que pase por la rampa (velocity_bridge)
         remappings=[
             ("/omni_wheel_drive_controller/cmd_vel", "/cmd_vel"),
+            ("/omni_wheel_drive_controller/odom", "/odom"),
         ],
     )
 
@@ -199,7 +210,7 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "world",
                 default_value=PathJoinSubstitution(
-                    [FindPackageShare("ow_peque_description"), "worlds", "maze.sdf"]
+                    [FindPackageShare("ow_peque_description"), "worlds", "cones.sdf"]
                 ),
                 description="Ruta al archivo SDF del mundo.",
             ),
