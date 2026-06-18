@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<sdf version="1.10">
+  <model name="traffic_cone">
+    <static>false</static>
+    <link name="link">
+      <pose>0 0 0.006 0 0 0</pose>
+      <inertial>
+        <mass>0.0072</mass>
+        <!-- cono sólido: Ixx=Iyy=(3m/80)*(h²+4r²), Izz=(3/10)*m*r²  h=0.071m r=0.0275m -->
+        <inertia>
+          <ixx>2.2e-6</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>2.2e-6</iyy>
+          <iyz>0</iyz>
+          <izz>1.6e-6</izz>
+        </inertia>
+      </inertial>
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>model://traffic_cone/meshes/traffic_cone.stl</uri>
+            <scale>0.001 0.001 0.001</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>1.0 0.4 0.0 1</ambient>
+          <diffuse>1.0 0.4 0.0 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+        </material>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <cylinder>
+            <radius>0.02</radius>
+            <length>0.065</length>
+          </cylinder>
+        </geometry>
+      </collision>
+    </link>
+  </model>
+</sdf>
