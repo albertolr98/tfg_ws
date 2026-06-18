@@ -72,7 +72,19 @@
         <mu1>${coef1}</mu1>
         <mu2>${coef2}</mu2>
         <fdir1>1.0 0.0 0.0</fdir1>
-        
+
     </gazebo>
+
+    <!-- Publica /model/<name>/pose para calibración de odometría -->
+    <xacro:if value="$(arg sim_mode)">
+        <gazebo>
+            <plugin filename="gz-sim-pose-publisher-system"
+                    name="gz::sim::systems::PosePublisher">
+                <publish_link_pose>false</publish_link_pose>
+                <publish_model_pose>true</publish_model_pose>
+                <update_frequency>50.0</update_frequency>
+            </plugin>
+        </gazebo>
+    </xacro:if>
 
 </robot>
